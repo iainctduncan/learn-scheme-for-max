@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Learn Scheme For Max and S74 Scheme (a work in progress) &#8212; Learn Scheme For Max and S74 Scheme 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Variables and Functions" href="variables_and_functions.html" />
+    <link rel="prev" title="Learn Scheme For Max &amp; S74 Scheme" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="learn-scheme-for-max-and-s74-scheme-a-work-in-progress">
+<h1>Learn Scheme For Max and S74 Scheme (a work in progress)<a class="headerlink" href="#learn-scheme-for-max-and-s74-scheme-a-work-in-progress" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The purpose of this e-book is to help people who are interested in Scheme For Max learn
+Scheme Lisp.
+Despite the reputation of Lisp as an esoteric and unusual language, it’s
+easy to learn enough to be productive in Scheme For Max. However, learning Scheme
+presents some challenges. The big one is
+that Scheme is not really <em>one</em> language - it’s a family of related Lisp dialects
+with many features that differ by implementation.
+This differs from languages like C, Python, or Ruby, and
+has both pros and cons.</p>
+<p>The pro is that one can find an implementation optimized
+for any particular use case. You can find flavours for fast compilation (Gambit),
+for embedding (Guile), for large code bases (Chez), for linguistic research (Racket), and so on.
+S7 Scheme, developed by Bill at the CCRMA computer music center at Stanford, is designed
+with our problem domain in mind, and thus the linguistic trade-off decisions have all
+favoured what makes sense for someone working on interactive computer music. S74
+is a thin layer on top of S7 to make S7 more beginner friendly - it just adds convenience
+functions ported from other implementations that I believe a typical Scheme For Max user
+will want out-of-the-box.</p>
+<p>The big downside of this situation is documentation. The good news is that Scheme’s
+prevalence in academia means that there are a <em>lot</em> of great, free, on-line resources.
+However, none of those target S7 very well, as S7 uses a mix of features from various minimal Schemes
+and from Common Lisp. This means one must figure out which bits do and don’t apply for Scheme For Max,
+and look across a variety of sources.
+The S7 documentation has a wealth of examples, but is aimed solidly at the (very!) experienced
+Scheme and Lisp hacker. The purpose of this book is to get the new Lisper up to speed
+as easily as possible with Scheme as it is implemented in Scheme For Max. Following this
+book you’ll be able to take advantage of the many wonderful resources out there, ranging from
+beginner friendly books like “The Little Schemer” and “How to Design Programs” to some
+of the most advanced and influential books in computer science, such as
+“Structure and Interpretation of Computer Programs” (SICP).</p>
+<p>Learning Scheme is a bit different from learning other lanugages. Scheme is minimal - really minimal.
+There is almost no syntax, and a very small number of special forms. (Part of what makes it
+great for working with Max!) However, learning to think in Scheme is harder than most
+other languages. You may have heard of the term “homoiconicity”, or heard the expression
+that in Lisp “Code is data, and data is code”. To write idiomatic Scheme and really take
+advantage of what the language makes possible, we need to understand how the language
+and intepreter work in a way that other languages don’t require until an advanced level.
+We need to understand how to move easily between code-as-data and data-as-code. This
+presents a challenge in teaching the language. There are many good books out there
+that do this admirably, such as “Common Lisp: A Gentle Introduction to Symbolic Computation” and
+the previously mentioned “How to Design Computer Programs”.  But they aren’t aimed at a dialect
+similar to S7, and they are deep on theory and fundamentals.</p>
+<p>The approach I’m going to take is a bit different. In Part 1, I’ll teach you the fundamental
+building blocks of Scheme with the aim of getting you going in Scheme for Max as
+fast as possible. I want you to make things in Max and experience the benefits of Scheme
+For Max right away, even if you are writing “bad Scheme”. We really don’t need to know
+much Scheme, or be writing elegant functional code, to get stuff done in Max. We will
+cover making variables and functions, looping constructs, managing definitions and scope,
+and simple cases of code-as-data/data-as-code. And we’ll use Scheme for Max examples
+that you can play with right away in Max.</p>
+<p>Then in Part II, we will double back to the beginning and rexamine the same content
+in much greater depth, looking under the hood and what’s going on in the interpreter
+and why this matters for building elegant Scheme programs. We’ll look at more
+advanced, idiomatic Scheme approaches to common programming problems, and we’ll
+discuss S7’s unique features and how to use them. Part II will
+equip you to use the broader Scheme resources available, and hopefully, give you the
+famous “Lisp enlightenment”.</p>
+<p>This approach is in contrast to most of the Scheme literature I’ve found, and is
+inspired by my experience teaching music. We don’t expect students to have the interest
+necessary to understand tuning systems and why a dominant chord sounds the way it does
+before we get them playing songs. After they have experienced the joy of music and
+have a curiousity about the fundamentals, then we go back to the beginning and explain
+<em>why</em> a C scale and an Ab scale have the notes they do. I believe this approach
+will get you enjoying Scheme, and making <em>music</em>, as soon as possible, while exposing you
+to what I truly believe is the most elegant and expressive family of programming
+languages.</p>
+<p>Finally, I am publishing this free as it develops. So initial drafts will be a bit rough
+and move pretty quickly, but will be fleshed out over time. I want to get material
+into the hands of users as soon as I can, and will improve it later based on feedback.
+Please feel free to submit questions or requests for clarification in the Github issues.</p>
+<p>Enjoy and happy Scheming!</p>
+<p>Iain Duncan</p>
+<p>University of Victoria</p>
+<p>Victoria, BC</p>
+<p>January 2021</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Learn Scheme For Max and S74 Scheme</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Learn Scheme For Max and S74 Scheme (a work in progress)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="variables_and_functions.html">Variables and Functions</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Learn Scheme For Max &amp; S74 Scheme</a></li>
+      <li>Next: <a href="variables_and_functions.html" title="next chapter">Variables and Functions</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Iain CT Duncan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/introduction.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

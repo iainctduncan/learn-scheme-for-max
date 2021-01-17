@@ -1,0 +1,315 @@
+Part 1 - A Scheme Crash Course
+==============================
+
+This section will give you a crash course in S74 Scheme, glossing over much of theory,
+but getting you up and running in Scheme For Max as fast as possible.
+
+Setting Up
+----------
+To run these examples, you should be at a Scheme interpreter. I recommend opening
+Max and having both a file editor and the built in s4m.repl bpatcher open, with
+the Max console in view. You'll want to be able to send lines of code to the 
+interpreter and see the results in the console. To send code from your editor
+to S4M, check out the S4M cookbook example on editor integration. It's worth getting
+this going as it will make learning a lot more pleasant.
+
+In the code sections here, I show code as we send it to the intepreter, and the
+results back are prefaced with **s4m>**. Lines that start with a semi-colon are comments
+and don't get run by the interpreter.
+
+
+
+Syntax and Evaluation
+---------------------
+
+Scheme syntax is very simple: everything in the language is done with **s-expressions**.
+(**sexps** for short.) An s-expression is a series of symbols surrounded by parentheses.
+When we send an s-expression to the interpreter to be **evaluated**, the interpreter takes
+the first symbol as being a symbol that is bound to a **function**, and calls that function
+with the remaining items as **parameters**, also called **arguments**. (In strict computer science
+circles, there are differences between the terms "procedure" and "function", and between 
+"parameter" and "argument", but we are *not* going to worry about those here, you can take
+them as synonyms for now.)
+
+.. code:: scm
+
+  ;; evaluating an sexp that calls the function bound to the symbol '+'
+  ;; evaluating this sexp calls the function with arguments and returns value 2
+  (+ 1 1)
+  s4m> 2
+
+This style of syntax is called **prefix notation** - functions are in the first
+slot, followed by as many arguments as the function will permit.
+
+.. code:: scm
+
+  ;; add more numbers!
+  (+ 1 2 3 4)
+  s4m> 10
+ 
+Nesting is simple - just add more sexps. They are evaluated from the inside out.
+ 
+.. code:: scm
+
+  ;; a compound expression
+  (+ 1 (* 2 (+ 3 4)))
+  s4m> 15
+
+In the above, three sexps get evaluated. First, **(+ 3 4)** evaluates to
+7 by calling the + function with arguments 3 and 4, resulting in
+**(+ 1 (* 2 7)))**. Next, **(* 2 7)** is evaluated by calling the * function with
+arguments 2 and 7, leaving **(+ 1 14)**. Finally, the remaining sexp is evaluated 
+by calling the + function with arguments 1 and 14. Each round of evaluation
+calls a function, replacing the sexp with the results. 
+
+This is critical to understand. Evaluation of an sexp calls the function
+(or special form) in the first slot, with the arguments from the rest of the sexp, and nested sexps are
+evaluated inside-out.
+
+
+Variables
+-----------
+
+The **define** function makes a variable by binding a value to a **symbol**
+in the currently executing scope. If we run define at the top level of our program,
+this will be the **global scope** and this binding will be visible everywhere in our
+program. (Unless it is shadowed by another binding of the same symbol, which we will 
+get to later...)
+
+.. code:: scm
+
+  ;; define a variable by bindin the symbol 'a' to the value 99
+  (define a 99)
+  s4m> 99
+
+This function is creating a **side-effect**, meaning it does something other than
+just return a value. In S7 (but not all Schemes), define also *returns* the value
+that was bound. Which means we could, if we really wanted, do something like this:
+
+.. code:: scm
+
+  ;; both b and a will be bound to 99
+  ;; not recommended, here for illustration only!
+  (define b (define a 99))
+  s4m> 99
+
+Evaluation does not always mean calling a function. If we evaluate a form
+that is *not* an s-expression, we get something back, with what that something
+is depending on the form. Evaluating a basic type returns the value itself 
+(no change) and evaluating a variable returns the value bound in the variable.
+
+ 
+.. code:: scm
+
+  ;; evaluating a simple type like a number returns the value
+  99
+  s4m> 99
+
+  ;; evaluating a variable returns the value bound to the variable
+  (define foo 99)
+  s4m> 99
+
+  foo
+  s4m> 99
+
+Once a variable has been created, we can assign a new value to it with the **set!** function.
+Set is named **set!**, with an exclamation mark, to indicate that it has a side-effect.
+In S7, set! also returns the value set. We can only set a variable that has already
+been defined. In S7 (but not all Schemes), we can also set a new value by just
+redefining.
+
+.. code:: scm
+
+  (define a 99)
+  s4m> 99
+
+  a
+  s4m> 99
+
+  (set! a 100)
+  s4m> 100
+
+  (define a 101)
+  s4m> 101
+
+  a
+  s4m> 101
+
+  (set! z 999)
+  s4m> ERROR unbound variable z
+
+
+Keywords
+--------
+
+Some Lisp dialects, including S7, support **keywords**. A keyword is a symbol that
+starts with a colon and *always evaluates to itself*. A keyword can not be bound
+to anything other than itself. In this way, it acts like a simple type, such as
+a string or number. This is extremely handy in Max, as we can see
+at a glance that a symbol starting with a colon is keyword, no matter the context.
+A variable can hold a keyword, but a keyword can't be a variable.
+
+When we get to hash-tables and dictionaries, you'll see that keywords are commonly
+used as keys. Conveniently, Max will let us use them in many places as well, including
+table and dict names (but not scripting names unfortunately).
+
+.. code:: scm
+  
+  ;; evaluating a keyword has no change
+  ;; much like evaluating a simple type
+  :my-keyword
+  s4m> :my-keyword
+
+  (define var-holding-a-keyword :my-keyword)
+  s4m> :my-keyword
+
+  var-holding-a-keyword
+  s4m> :my-keyword
+
+  (define :my-keyword 99)
+  s4m> Error: keywords are constants 
+  
+
+Functions
+---------
+
+Functions are defined by using the special form **lambda**. Evaluating a lambda
+form will return a function, which we can in turn bind to a variable.
+
+The lambda form takes two **clauses**: a parameter list and a body. The parameter
+list specifies the local bindings that will be active in the body of the function,
+based on the arguments passed in. The body gets evaluated when we call the function,
+with whatever arguments are passed in at call time substituted for the parameters
+in the body. 
+
+.. code:: scm
+
+  ;; a lambda expression that takes an argument, x, and returns x + 1
+  ;; it returns a lambda procedure
+  (lambda (x) (+ 1 x))
+  s4m> #<lambda (x)>
+
+  ;; the same, but binding the function to the symbol my-fun
+  (define my-fun (lambda (x) (+ 1 x)))
+  s4m> my-fun
+
+  ;; now call the function
+  (my-fun 2)
+  s4m> 3
+
+  ;; this means we could nest the lambda form in order to call it
+  ;; but this is not very readable, so not usually done
+  ((lambda (x) (+ 1 x)) 3)
+  s4m> 4
+
+  ;; a lambda form specifying a procedure with two parameters
+  (define my-adder (lambda (a b) (+ a b)))
+  s4m> my-adder
+
+  (my-adder 3 4)
+  s4m> 7
+
+There is a shortcut in Scheme, (sometimes called "defun" notation, from Common Lisp), that allows
+us to define functions without explictly using lambda. 
+
+
+.. code:: scm
+
+  ;; define a function to add 1 using defun notation
+  (define (add-1 x) (+ 1 x))
+  s4m> add-1
+
+  ;; this is no different from the below
+  (define add-1 (lambda (x) (+ 1 x)))
+
+  ;; in S7 we could do this, because define returns the value bound
+  ;; again, not recommended, but a useful illustration
+  ((define (add-1 x) (+ 1 x)) 2)
+  s4m> 3
+
+
+Some texts only use the lambda form as it is more explicit, and thus clear what is going on. We
+will use both as space can be at a premium in a Max patch!
+
+
+Side-trip: Output in Scheme For Max
+------------------------------------
+
+In Scheme for Max, we have two functions we will use all the time for output, **out** and **post**.
+**out** is used to send values out the s4m object's outlets. It takes two arguments, the
+outlet number, and the value to be sent out. In Scheme For Max, we call the first outlet "outlet 0".
+
+**out** is an example of a function that is called purely for its side-effect - output a number.
+We send output out a lot, so we don't necessarily want to see every value sent out showing up in the
+Max console. For this reason, out returns **null**. This way, if our Scheme for Max object's **log-null**
+attribute is false (the default), we will not see any console activity on a call to **out**.
+
+In Scheme, **null** is technically the **null list**, and it's printed representation is **()**. 
+We will explain why later on. For now, just know this is null, and it means "empty value".
+
+
+.. code:: scm
+  
+  ;; send the number 99 out the first outlet
+  ;; this function also returns the null list
+  (out 0 99)
+  s4m>
+  ;; pretend we set @log-null to 1
+  (out 0 99)
+  s4m> ()
+
+If we want so send out multiple values, we need to make a list. We will look at lists in detail soon,
+but for now, it's done like so:
+
+.. code:: scm
+  
+  ;; send the list 1 2 3 out the first outlet
+  ;; the list function returns a list
+  (out 0 (list 1 2 3))
+
+
+The **post** function allows us to log to the Max console. It accepts any number of arguments,
+automatically converting them to string representations and putting spaces between them. It is
+also being called for its side effect and so returns nothing. You'll see that the prompt
+from post is **s4m:** instead of the repl return prompt of **s4m>**
+
+
+.. code:: scm
+  
+  ;; post to console
+  (post 1 2 3)
+  s4m: 1 2 3
+
+  ;; post a variable
+  (define a 99)
+  (post "a is" a)
+  s4m: a is 99
+  
+During development, I recommend attaching a **print s4m-out:** object to your outlet, giving you
+all the output in your Max console while you work.
+
+.. code:: scm
+  
+  ;; shows return value (if @log-nulls is 1) and the printed output
+  (out 0 :foobar)
+  s4m> ()
+  s4m-out: :foobar
+
+   
+
+Scope
+-----
+
+Functions can read variables from bindings that are active when the function runs.
+
+LEFT OFF:
+- write about visibility of local variables in functions
+
+
+
+
+
+.. code:: scm
+
+  s4m> 
+

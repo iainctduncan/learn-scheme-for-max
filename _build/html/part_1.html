@@ -1,0 +1,354 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Part 1 - A Scheme Crash Course &#8212; Learn Scheme For Max and S74 Scheme 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Learn Scheme For Max and S74 Scheme (a work in progress)" href="introduction.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="part-1-a-scheme-crash-course">
+<h1>Part 1 - A Scheme Crash Course<a class="headerlink" href="#part-1-a-scheme-crash-course" title="Permalink to this headline">¶</a></h1>
+<p>This section will give you a crash course in S74 Scheme, glossing over much of theory,
+but getting you up and running in Scheme For Max as fast as possible.</p>
+<div class="section" id="setting-up">
+<h2>Setting Up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h2>
+<p>To run these examples, you should be at a Scheme interpreter. I recommend opening
+Max and having both a file editor and the built in s4m.repl bpatcher open, with
+the Max console in view. You’ll want to be able to send lines of code to the
+interpreter and see the results in the console. To send code from your editor
+to S4M, check out the S4M cookbook example on editor integration. It’s worth getting
+this going as it will make learning a lot more pleasant.</p>
+<p>In the code sections here, I show code as we send it to the intepreter, and the
+results back are prefaced with <strong>s4m&gt;</strong>. Lines that start with a semi-colon are comments
+and don’t get run by the interpreter.</p>
+</div>
+<div class="section" id="syntax-and-evaluation">
+<h2>Syntax and Evaluation<a class="headerlink" href="#syntax-and-evaluation" title="Permalink to this headline">¶</a></h2>
+<p>Scheme syntax is very simple: everything in the language is done with <strong>s-expressions</strong>.
+(<strong>sexps</strong> for short.) An s-expression is a series of symbols surrounded by parentheses.
+When we send an s-expression to the interpreter to be <strong>evaluated</strong>, the interpreter takes
+the first symbol as being a symbol that is bound to a <strong>function</strong>, and calls that function
+with the remaining items as <strong>parameters</strong>, also called <strong>arguments</strong>. (In strict computer science
+circles, there are differences between the terms “procedure” and “function”, and between
+“parameter” and “argument”, but we are <em>not</em> going to worry about those here, you can take
+them as synonyms for now.)</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; evaluating an sexp that calls the function bound to the symbol &#39;+&#39;</span>
+<span class="c1">;; evaluating this sexp calls the function with arguments and returns value 2</span>
+<span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>This style of syntax is called <strong>prefix notation</strong> - functions are in the first
+slot, followed by as many arguments as the function will permit.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; add more numbers!</span>
+<span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>Nesting is simple - just add more sexps. They are evaluated from the inside out.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; a compound expression</span>
+<span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="p">(</span><span class="nb">* </span><span class="mi">2</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">3</span> <span class="mi">4</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">15</span>
+</pre></div>
+</div>
+<p>In the above, three sexps get evaluated. First, <strong>(+ 3 4)</strong> evaluates to
+7 by calling the + function with arguments 3 and 4, resulting in
+<strong>(+ 1 (* 2 7)))</strong>. Next, <strong>(* 2 7)</strong> is evaluated by calling the * function with
+arguments 2 and 7, leaving <strong>(+ 1 14)</strong>. Finally, the remaining sexp is evaluated
+by calling the + function with arguments 1 and 14. Each round of evaluation
+calls a function, replacing the sexp with the results.</p>
+<p>This is critical to understand. Evaluation of an sexp calls the function
+(or special form) in the first slot, with the arguments from the rest of the sexp, and nested sexps are
+evaluated inside-out.</p>
+</div>
+<div class="section" id="variables">
+<h2>Variables<a class="headerlink" href="#variables" title="Permalink to this headline">¶</a></h2>
+<p>The <strong>define</strong> function makes a variable by binding a value to a <strong>symbol</strong>
+in the currently executing scope. If we run define at the top level of our program,
+this will be the <strong>global scope</strong> and this binding will be visible everywhere in our
+program. (Unless it is shadowed by another binding of the same symbol, which we will
+get to later…)</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; define a variable by bindin the symbol &#39;a&#39; to the value 99</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>This function is creating a <strong>side-effect</strong>, meaning it does something other than
+just return a value. In S7 (but not all Schemes), define also <em>returns</em> the value
+that was bound. Which means we could, if we really wanted, do something like this:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; both b and a will be bound to 99</span>
+<span class="c1">;; not recommended, here for illustration only!</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">b</span> <span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">99</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>Evaluation does not always mean calling a function. If we evaluate a form
+that is <em>not</em> an s-expression, we get something back, with what that something
+is depending on the form. Evaluating a basic type returns the value itself
+(no change) and evaluating a variable returns the value bound in the variable.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; evaluating a simple type like a number returns the value</span>
+<span class="mi">99</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="c1">;; evaluating a variable returns the value bound to the variable</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">foo</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="nv">foo</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>Once a variable has been created, we can assign a new value to it with the <strong>set!</strong> function.
+Set is named <strong>set!</strong>, with an exclamation mark, to indicate that it has a side-effect.
+In S7, set! also returns the value set. We can only set a variable that has already
+been defined. In S7 (but not all Schemes), we can also set a new value by just
+redefining.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="nv">a</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="p">(</span><span class="k">set! </span><span class="nv">a</span> <span class="mi">100</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">101</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">101</span>
+
+<span class="nv">a</span>
+<span class="nv">s4m&gt;</span> <span class="mi">101</span>
+
+<span class="p">(</span><span class="k">set! </span><span class="nv">z</span> <span class="mi">999</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">ERROR</span> <span class="nv">unbound</span> <span class="nv">variable</span> <span class="nv">z</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="keywords">
+<h2>Keywords<a class="headerlink" href="#keywords" title="Permalink to this headline">¶</a></h2>
+<p>Some Lisp dialects, including S7, support <strong>keywords</strong>. A keyword is a symbol that
+starts with a colon and <em>always evaluates to itself</em>. A keyword can not be bound
+to anything other than itself. In this way, it acts like a simple type, such as
+a string or number. This is extremely handy in Max, as we can see
+at a glance that a symbol starting with a colon is keyword, no matter the context.
+A variable can hold a keyword, but a keyword can’t be a variable.</p>
+<p>When we get to hash-tables and dictionaries, you’ll see that keywords are commonly
+used as keys. Conveniently, Max will let us use them in many places as well, including
+table and dict names (but not scripting names unfortunately).</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; evaluating a keyword has no change</span>
+<span class="c1">;; much like evaluating a simple type</span>
+<span class="nv">:my-keyword</span>
+<span class="nv">s4m&gt;</span> <span class="nv">:my-keyword</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">var-holding-a-keyword</span> <span class="nv">:my-keyword</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">:my-keyword</span>
+
+<span class="nv">var-holding-a-keyword</span>
+<span class="nv">s4m&gt;</span> <span class="nv">:my-keyword</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">:my-keyword</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error:</span> <span class="nv">keywords</span> <span class="nv">are</span> <span class="nv">constants</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<p>Functions are defined by using the special form <strong>lambda</strong>. Evaluating a lambda
+form will return a function, which we can in turn bind to a variable.</p>
+<p>The lambda form takes two <strong>clauses</strong>: a parameter list and a body. The parameter
+list specifies the local bindings that will be active in the body of the function,
+based on the arguments passed in. The body gets evaluated when we call the function,
+with whatever arguments are passed in at call time substituted for the parameters
+in the body.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; a lambda expression that takes an argument, x, and returns x + 1</span>
+<span class="c1">;; it returns a lambda procedure</span>
+<span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="nv">&lt;lambda</span> <span class="p">(</span><span class="nf">x</span><span class="p">)</span><span class="nv">&gt;</span>
+
+<span class="c1">;; the same, but binding the function to the symbol my-fun</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-fun</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-fun</span>
+
+<span class="c1">;; now call the function</span>
+<span class="p">(</span><span class="nf">my-fun</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+
+<span class="c1">;; this means we could nest the lambda form in order to call it</span>
+<span class="c1">;; but this is not very readable, so not usually done</span>
+<span class="p">((</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">4</span>
+
+<span class="c1">;; a lambda form specifying a procedure with two parameters</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-adder</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">a</span> <span class="nv">b</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-adder</span>
+
+<span class="p">(</span><span class="nf">my-adder</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">7</span>
+</pre></div>
+</div>
+<p>There is a shortcut in Scheme, (sometimes called “defun” notation, from Common Lisp), that allows
+us to define functions without explictly using lambda.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; define a function to add 1 using defun notation</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">add-1</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">add-1</span>
+
+<span class="c1">;; this is no different from the below</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">add-1</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>Some texts only use the lambda form as it is more explicit, and thus clear what is going on. We
+will use both as space can be at a premium in a Max patch!</p>
+</div>
+<div class="section" id="side-trip-output-in-scheme-for-max">
+<h2>Side-trip: Output in Scheme For Max<a class="headerlink" href="#side-trip-output-in-scheme-for-max" title="Permalink to this headline">¶</a></h2>
+<p>In Scheme for Max, we have two functions we will use all the time for output, <strong>out</strong> and <strong>post</strong>.
+<strong>out</strong> is used to send values out the s4m object’s outlets. It takes two arguments, the
+outlet number, and the value to be sent out. In Scheme For Max, we call the first outlet “outlet 0”.</p>
+<p><strong>out</strong> is an example of a function that is called purely for its side-effect - output a number.
+We send output out a lot, so we don’t necessarily want to see every value sent out showing up in the
+Max console. For this reason, out returns <strong>null</strong>. This way, if our Scheme for Max object’s <strong>log-null</strong>
+attribute is false (the default), we will not see any console activity on a call to <strong>out</strong>.</p>
+<p>In Scheme, <strong>null</strong> is technically the <strong>null list</strong>, and it’s printed representation is <strong>()</strong>.
+We will explain why later on. For now, just know this is null, and it means “empty value”.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; send the number 99 out the first outlet</span>
+<span class="c1">;; this function also returns the null list</span>
+<span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span>
+<span class="c1">;; pretend we set @log-null to 1</span>
+<span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>If we want so send out multiple values, we need to make a list. We will look at lists in detail soon,
+but for now, it’s done like so:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; send the list 1 2 3 out the first outlet</span>
+<span class="c1">;; the list function returns a list</span>
+<span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The <strong>post</strong> function allows us to log to the Max console. It accepts any number of arguments,
+automatically converting them to string representations and putting spaces between them. It is
+also being called for its side effect and so returns nothing. You’ll see that the prompt
+from post is <strong>s4m:</strong> instead of the repl return prompt of <strong>s4m&gt;</strong></p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; post to console</span>
+<span class="p">(</span><span class="nf">post</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span>
+
+<span class="c1">;; post a variable</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">99</span><span class="p">)</span>
+<span class="p">(</span><span class="nf">post</span> <span class="s">&quot;a is&quot;</span> <span class="nv">a</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">a</span> <span class="nv">is</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>During development, I recommend attaching a <strong>print s4m-out:</strong> object to your outlet, giving you
+all the output in your Max console while you work.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; shows return value (if @log-nulls is 1) and the printed output</span>
+<span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="nv">:foobar</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+<span class="nv">s4m-out:</span> <span class="nv">:foobar</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="scope">
+<h2>Scope<a class="headerlink" href="#scope" title="Permalink to this headline">¶</a></h2>
+<p>Functions can read variables from bindings that are active when the function runs.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="nv">s4m&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Learn Scheme For Max and S74 Scheme</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Learn Scheme For Max and S74 Scheme (a work in progress)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Part 1 - A Scheme Crash Course</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="introduction.html" title="previous chapter">Learn Scheme For Max and S74 Scheme (a work in progress)</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Iain CT Duncan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/part_1.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
