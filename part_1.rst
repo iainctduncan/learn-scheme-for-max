@@ -1,32 +1,79 @@
-Part 1 - A Scheme Crash Course
+A Scheme Crash Course
 ==============================
-
-This section will give you a crash course in S74 Scheme, glossing over much of theory,
-but getting you up and running in Scheme For Max as fast as possible.
 
 Setting Up
 ----------
-To run these examples, you should be at a Scheme interpreter. I recommend opening
+To run these examples, you should be at a Scheme For Max interpreter. I recommend opening
 Max and having both a file editor and the built in s4m.repl bpatcher open, with
 the Max console in view. You'll want to be able to send lines of code to the 
-interpreter and see the results in the console. To send code from your editor
-to S4M, check out the S4M cookbook example on editor integration. It's worth getting
-this going as it will make learning a lot more pleasant.
+interpreter and see the results in the console.  If you haven't already, I recommend watching the tutorial videos
+on the "Music With Lisp" youtube channel on installation and first steps. These
+will get you up and running, sending code to your s4m object. To send code from your editor
+to s4m, check out the s4m cookbook example on editor integration. It's worth getting
+this going as it will make learning a lot more pleasant. But you can definitely
+get started just using the **s4m.repl** bpatcher too.
 
-In the code sections here, I show code as we send it to the intepreter, and the
-results back are prefaced with **s4m>**. Lines that start with a semi-colon are comments
-and don't get run by the interpreter.
 
+In the code sections here, I show code as we send it to the intepreter and the
+results back from the interpreter. Lines that start with a semi-colon are comments
+and don't get run by the interpreter. Lines with no prefixing are expressions
+we send to s4m, whether from the built in text editor bpatcher or
+from our editor over a network connection. (Or sent to the interpreter some other way, perhaps from
+a Max message - see the Scheme For Max documentation if you're not clear
+how to do this). Let's quickly make sure we're clear on this:
+
+.. code:: scm
+
+  ;; a comment, you can skip typing this in
+
+  ;; an expression we send to s4m, it has no prefix
+  (+ 1 1)
+
+  ;; the return value from the interpreter
+  s4m> 2
+
+Some Scheme expressions have side effects. For example, the
+**post** function takes any number of arguments and logs them
+as strings to the Max console. 
+Console output starts with **s4m:** (note the colon)
+
+.. code:: scm
+
+  ;; an expression asking the intepreter to log to the console
+  (post "testing" 1 2 )
+  s4m: testing 1 2 
+
+If you have set the s4m attribute **log-null** to true (you can use
+the checkbox in the inspector), the console will also log the return
+values from any functions that return the **null list**. Normally when
+we work in Scheme For Max, we won't want to do this, so the default
+setting is for null values to be hidden from the console, but for the purpose
+of this tutorial, I recommend turning log-null on so you have a visual indication
+of the returned value. The post function is called only for its side effect
+(logging), so it returns the null list.  With log-null on, a call to post
+will thus show:
+
+.. code:: scm
+
+  ;; post prints output, and returns the null list ()
+  (post "hello-world")
+  s4m: hello-world
+  s4m> ()
+
+If you are able to successfully duplicate the above, we're ready to begin.
 
 
 Syntax and Evaluation
 ---------------------
 
 Scheme syntax is very simple: everything in the language is done with **s-expressions**.
-(**sexps** for short.) An s-expression is a series of symbols surrounded by parentheses.
-When we send an s-expression to the interpreter to be **evaluated**, the interpreter takes
-the first symbol as being a symbol that is bound to a **function**, and calls that function
-with the remaining items as **parameters**, also called **arguments**. (In strict computer science
+(**sexprs** for short.) A simple s-expression is either one **atom** (such as a symbol, number, string),
+or a series of atoms surrounded by parentheses, while a nested s-expression can contain
+inner s-expressions. 
+When we send an sexpr to the interpreter to be **evaluated**, the interpreter evaluates
+all nested expressions, from the inside out, ending with evaluation of the outer sexpr.
+Evaluation of a parenthetical s-expr is done by calling the first atom as a function, 
+with the remaining atoms passed as **parameters**, also called **arguments**. (In strict computer science
 circles, there are differences between the terms "procedure" and "function", and between 
 "parameter" and "argument", but we are *not* going to worry about those here, you can take
 them as synonyms for now.)
@@ -37,8 +84,12 @@ them as synonyms for now.)
   ;; evaluating this sexp calls the function with arguments and returns value 2
   (+ 1 1)
   s4m> 2
+  
+  ;; post is a function, and we can pass nested sexprs to it
+  (post "1 + 1 is:" (+ 1 1))
+  s4m: 1 + 1 is: 2
 
-This style of syntax is called **prefix notation** - functions are in the first
+This syntax is called **prefix notation** - functions are in the first
 slot, followed by as many arguments as the function will permit.
 
 .. code:: scm
@@ -64,13 +115,13 @@ calls a function, replacing the sexp with the results.
 
 This is critical to understand. Evaluation of an sexp calls the function
 (or special form) in the first slot, with the arguments from the rest of the sexp, and nested sexps are
-evaluated inside-out.
+evaluated inside-out. 
 
 
 Variables
 -----------
 
-The **define** function makes a variable by binding a value to a **symbol**
+The **define** function creates a variable by binding a value to a **symbol**
 in the currently executing scope. If we run define at the top level of our program,
 this will be the **global scope** and this binding will be visible everywhere in our
 program. (Unless it is shadowed by another binding of the same symbol, which we will 
@@ -78,13 +129,14 @@ get to later...)
 
 .. code:: scm
 
-  ;; define a variable by bindin the symbol 'a' to the value 99
+  ;; define a variable by binding the symbol 'a' to the value 99
   (define a 99)
   s4m> 99
 
-This function is creating a **side-effect**, meaning it does something other than
-just return a value. In S7 (but not all Schemes), define also *returns* the value
-that was bound. Which means we could, if we really wanted, do something like this:
+This function has a **side-effect**, meaning it does something other than
+just return a value. It's side effect is binding the variable. In s7 (but not all Schemes), 
+define also *returns* the value that was bound. 
+Which means we could, if we really wanted, do something like this:
 
 .. code:: scm
 
@@ -94,10 +146,9 @@ that was bound. Which means we could, if we really wanted, do something like thi
   s4m> 99
 
 Evaluation does not always mean calling a function. If we evaluate a form
-that is *not* an s-expression, we get something back, with what that something
+that is *not* a function call, we get something back, with what that something
 is depending on the form. Evaluating a basic type returns the value itself 
 (no change) and evaluating a variable returns the value bound in the variable.
-
  
 .. code:: scm
 
@@ -105,15 +156,15 @@ is depending on the form. Evaluating a basic type returns the value itself
   99
   s4m> 99
 
-  ;; evaluating a variable returns the value bound to the variable
   (define foo 99)
   s4m> 99
 
+  ;; evaluating a variable returns the value bound to the variable
   foo
   s4m> 99
 
 Once a variable has been created, we can assign a new value to it with the **set!** function.
-Set is named **set!**, with an exclamation mark, to indicate that it has a side-effect.
+Naming functions with side-effects with a trailing exclamation mark is a common Scheme idiom.
 In S7, set! also returns the value set. We can only set a variable that has already
 been defined. In S7 (but not all Schemes), we can also set a new value by just
 redefining.
@@ -129,6 +180,9 @@ redefining.
   (set! a 100)
   s4m> 100
 
+  a
+  s4m> 100
+  
   (define a 101)
   s4m> 101
 
@@ -142,16 +196,18 @@ redefining.
 Keywords
 --------
 
-Some Lisp dialects, including S7, support **keywords**. A keyword is a symbol that
+Some Lisp dialects, including S7, have **keywords**. A keyword is a symbol that
 starts with a colon and *always evaluates to itself*. A keyword can not be bound
-to anything other than itself. In this way, it acts like a simple type, such as
-a string or number. This is extremely handy in Max, as we can see
-at a glance that a symbol starting with a colon is keyword, no matter the context.
-A variable can hold a keyword, but a keyword can't be a variable.
+to anything other than itself - it can't be the name of a variable or function. 
+In this way, it acts like a simple type, such as
+a string or number. This is convenient in Max, as we can see
+at a glance that a symbol starting with a colon is a keyword, no matter the context.
+It doesn't matter if we're not sure whether it will get evaluated, because evaluation
+won't change anything. This means a variable can hold a keyword, but a keyword can't be a variable.
 
 When we get to hash-tables and dictionaries, you'll see that keywords are commonly
 used as keys. Conveniently, Max will let us use them in many places as well, including
-table and dict names (but not scripting names unfortunately).
+table and dict names.
 
 .. code:: scm
   
@@ -173,14 +229,13 @@ table and dict names (but not scripting names unfortunately).
 Functions
 ---------
 
-Functions are defined by using the special form **lambda**. Evaluating a lambda
-form will return a function, which we can in turn bind to a variable.
+Functions are defined using the special form **lambda**. Evaluating a lambda
+form will return an anonymous function, which we can in turn bind to a variable.
 
 The lambda form takes two **clauses**: a parameter list and a body. The parameter
 list specifies the local bindings that will be active in the body of the function,
 based on the arguments passed in. The body gets evaluated when we call the function,
-with whatever arguments are passed in at call time substituted for the parameters
-in the body. 
+with whatever arguments are passed in at call time substituted for the parameters. 
 
 .. code:: scm
 
@@ -198,7 +253,7 @@ in the body.
   s4m> 3
 
   ;; this means we could nest the lambda form in order to call it
-  ;; but this is not very readable, so not usually done
+  ;; but this is not very readable, so less commonly done
   ((lambda (x) (+ 1 x)) 3)
   s4m> 4
 
@@ -210,12 +265,13 @@ in the body.
   s4m> 7
 
 There is a shortcut in Scheme, (sometimes called "defun" notation, from Common Lisp), that allows
-us to define functions without explictly using lambda. 
+us to define functions without explictly using lambda. Under the hood,
+it's exactly the same. 
 
 
 .. code:: scm
 
-  ;; define a function to add 1 using defun notation
+  ;; define a function called add-1, that adds 1 to its argument
   (define (add-1 x) (+ 1 x))
   s4m> add-1
 
@@ -246,7 +302,6 @@ attribute is false (the default), we will not see any console activity on a call
 
 In Scheme, **null** is technically the **null list**, and it's printed representation is **()**. 
 We will explain why later on. For now, just know this is null, and it means "empty value".
-
 
 .. code:: scm
   
@@ -290,26 +345,757 @@ all the output in your Max console while you work.
 
 .. code:: scm
   
-  ;; shows return value (if @log-nulls is 1) and the printed output
+  ;; shows return value (if @log-nulls is 1) and the printed output from our print object
   (out 0 :foobar)
   s4m> ()
   s4m-out: :foobar
 
+
+.. TODO  the basic types we use in Max
+
+
+Compound Types: Lists, Vectors, & Hash-Tables
+---------------------------------------------
+
+In addition to our basic types, Scheme includes a number of compound types.
+While lists are the most important, and understanding lists is key to using
+Lisp effectively, they are the most complex, so we'll work up to them.
+
+Hash-Tables
+^^^^^^^^^^^
+Hash-tables are key-value stores, similar to dictionaries in Python or JavaScript.
+A key can be anything we'd like, but it's most common to use a keyword as a key,
+or barring that, a symbol. 
+
+.. code:: scm
+  
+  ;; create a hash-table, with keys :a and :b
+  (define my-hash (hash-table :a 1 :b 2)
+  s4m> (hash-table :a 1 :b 2)
+
+  ;; read value at :a
+  (hash-table-ref my-hash :a)
+  s4m> 1
+
+  ;; set value at :b
+  (hash-table-set! my-hash :b 99)
+  s4m> 99
+
+Asking for a value that is not in a hash-table returns #f, and we can remove
+an item from a hash-table by storing #f at the key. We can put a new item
+in the hash-table by setting it's value with a key.
+
+.. code:: scm
+  
+  ;; ask for a value not in our hash
+  (hash-table-ref my-hash :c)
+  s4m> #f
+
+  ;; add :c entry
+  (hash-table-set! my-hash :c 99)
+  s4m> 99
+
+  ;; delete entry :b
+  (hash-table-set! my-hash :b #f)
+  s4m> #f  
+
+  ;; inspect our hash now, b is now gone
+  my-hash
+  s4m> (hash-table :a 1 :c 99)
+
+s7 Scheme supports *applicative syntax* for compound data types, meaning
+we can use a hash-table variable as a function, and a key as an argument.
+
+.. code:: scm
+  
+  ; get :a, calling my-hash like a function
+  (my-hash :a)
+  s4m> 1
+
+
+When we do this, calling the hash-table with a key gives us a memory location, 
+and we can thus also use this with
+**set!**:
+
+.. code:: scm
+  
+  ; set :a, with applicative syntax
+  (set! (my-hash :a) 42)
+  s4m> 42
+
+Hash-tables can be nested.
+
+.. code:: scm
+  
+  (define deep-hash (hash-table :a 1 :b (hash-table :c 3 :d 4)))
+  s4m> (hash-table :a 1 :b (hash-table :c 3 :d 4))
+
+Applicative syntax is very helpful for nested hash-tables. Note
+that this syntax only works for applicative syntax, *not* for 
+**hash-table-ref**:
+
+.. code:: scm
+  
+  :get contents of :c, at contents of :b
+  (deep-hash :b :c)
+  s4m> 3
+
+We can set this way too:
+
+.. code:: scm
+  
+  :set :b :c
+  (set! (deep-hash :b :c) 99)
+  s4m> 99
+ 
+Be aware though, that trying to use a chain of keys is an error past the first
+non-existent key, for either getting or setting:
+
+.. code:: scm
+  
+  (define deep-hash (hash-table :a 1 :b (hash-table :c 3 :d 4)))
+  s4m> (hash-table :a 1 :b (hash-table :c 3 :d 4))
+  
+  (deep-hash :z)
+  s4m> #f
+
+  (deep-hash :a :z)
+  s4m> #f
+
+  (deep-hash :z :x)
+  s4m> Error....
+
+  (set! (deep-hash :z :y :x))
+  s4m> Error....
+
+
+.. TODO discuss output
+
+.. TODO discuss max conversion
+
+.. TODO testing equality with hashtables
+
+.. TODO in later section, looping through a hash-table (needs to be after discussing pairs)
+
+If we stick to simple types as keys (numbers, symbols, 
+keywords), we can convert hash-tables to Max dictionaries and vice versa, writing
+and reading from Max dictionaries. See the Scheme For Max documentation for details
+on these functions.
+
+
+if, cond, predicates, and testing equality
+------------------------------------------
+
+In Scheme, we typically branch using one of two special forms: **if** and **cond**.
+These are both *special forms* - they look like function calls but are not
+evaluated the same way as functions. The **if** special form takes
+three clauses. The first is the **predicate**, that which is tested to determine
+which branch we take. The second is the expression that is evaluated and returned if the predicate
+evaluates to true. And the third is the expression that is evaluated and returned if the predicate fails.
+Thus the value returned by an if expression is the value of evaluating either the first or second result clause.
+These clauses can be either simple values, or s-expressions that are evaluated to
+return a value. The reason **if** is a special form is that the s-expressions
+for the clauses *only* evaluate if that clause is to be returned. 
+
+.. code:: scm
+
+  ;; return 99 if test-var is 33, else return 66
+  (define test-var 99)
+  s4m> 99
+  (if (= 99 test-var) 33 66)
+  s4m> 33  
+
+  ;; using the above to set a variable
+  (set! my-var (if (= 99 test-var) 33 66))
+  s4m> 33
+
+  ;; an if statement that returns the results of s-exp evaluation
+  (if (= 99 test-var)   
+        (+ 32 1) 
+        (+ 66 4))
+  s4m> 33
+
+  
+So far, if looks just like a function. The fact that it is not a function
+is illustrated if we put side effects in our two clauses. If we want to
+add a side effect to a clause that will return a value, we can enclose
+child expressions in a **begin** statement. All expressions in the body
+of the begin are evaluated, but only the last expression is returned.
+
+.. code:: scm
+
+  (begin 1 2 3)
+  s4m> 3
+
+  ;; an if statement that returns the results of s-exp evaluation
+  (if (= 1 1)   
+        (begin (post "first clause!") (+ 32 1))     
+        (begin (post "second clause!") (+ 66 4)))
+  s4m: first clause!
+  s4m> 33
+
+When we run the above, we see that our console only shows
+the output from the first clause. If **if** was a function, we would
+see the output from both clauses, because of the fact that 
+expressions are evaluated from the inside out. The fact that **if**
+breaks the rules of normal function execution is what makes it a special form.
+
+We don't *need* to use a begin statement, we could just put side
+effect expressions in the slots, as long as we have made sure that
+it's ok that the entire **if** form evaluates to whatever is
+returned in the clause (i.e. the null list, potentially).
+
+In S7, we can skip the final clause in an if statement, in which case
+the return value of the if is **unspecified** if the predicate fails.
+
+.. code:: scm
+
+  ;; if var = 1, if evaluates to null, else to unspecified
+  (define var 2)
+  (if (= var 1)   
+    (post "first clause!")) ;post returns null, so the if will too
+  s4m> <unspecified>
+        
+
+This is a good time to discuss predicates and truth in Scheme, because it's a
+bit different from what you may be used to other languages. 
+
+**In Scheme, only #false is false**.
+
+Repeat that three times. False can be expressed as either **#f** or **#false**, 
+but nothing else ever equals false. Not zero (like C), not the null list 
+(like Common Lisp), not an empty data structure. Nothing except **#false**!
+
+.. code:: scm
+
+  ;; only false is false! 
+  (if 0
+    (post "I post!")
+    (post "but I don't, because I never get evaluated!") )   
+
+This is useful in Max, because Max has no notion of boolean True or False. 
+In Max, we express booleans with 1 or 0. Which means that we can indicate
+an *invalid* Max value using Scheme's #false, and we can test
+for a valid (or existing) value by using the value in a predicate. This
+will come in handy when we get to dictionaries and hash-tables.
+
+Scheme has many predicate functions which returns #f if they fail, and end in a **?**. 
+For example, if we want to test whether a value is the **null list** (an empty list), 
+we can use the **null?** predicate.
+
+.. code:: scm
+
+  ;; if var is the null list, post
+  (if (null? var)
+    (post "Var is the null list."))
+
+Some other useful predicates are **defined?**, **procedure?**, **symbol?**, **number?**,
+**list?**, **keyword?**.
+
+.. TODO: link to a list of S7 built in predicates 
+  
+It is idiomatic Scheme to name your own predicates similarly.
+Not all Scheme implementations have the same predicates built in,
+so if you look up a predicate online, you probably want to test it
+in the REPL to make sure it's in S74, or add it to your base file.
+
+Testing Equality
+----------------
+Testing equality in Scheme is a bit different than you might be used to in other languages
+as well. 
+
+Numeric equality is tested with **=**, but note that we do not have
+a question mark. Types of numbers (integers, floats, fractions) will be properly cast
+to each other:
+
+.. code:: scm
+
+  ; testing numbers for equality
+  (= 1 1.0)
+  #t
+  (= 1 2/2)
+  #t
+  (define a 1)
+  (= a 1.0)
+  #t
+
+Testing whether non-numeric values are the same can be done with **eqv?**. This
+tests whether the pointers point to *the same thing*.
+
+.. code:: scm
+
+  ; two vars to the same list are equivalent
+  (define a (list 1 2 3))
+  (define a-alias a)
+  (eqv? a a-alis)
+  #t
+
+  ; but not equivalent to some other list with the same values
+  (eqv? a (list 1 2 3)
+  #f
+
+  ; this works for functions and symbols too
+  (define var-pointing-to-post post)
+  (eqv? var-pointing-to-post post)
+  #t  
+  (define the-sym 'my-symbol)
+  (eqv? the-sym 'my-symbol)
+  #t
+  (eqv? 'my-symbol 'my-symbol)
+  #t
+
+  ; simple types are equivalent only if no cast is involved
+  (eqv? 1 1)
+  #t
+  (eqv? 1 1.0)
+  #f
+   
+Testing whether compound types are the same, element by element, can
+be done with **equal?**. This tests the *contents* of the compound
+type, not the pointers.
+
+.. code:: scm
+
+  ; test a list 
+  (equal? (list 1 2 3) (list 1 2 3))
+  #t
+  (define l1 (list 1 2 3))
+  (define l2 (list 1 2 3))
+  ; their contents are the same
+  (equal? l1 l2)
+  #t
+  ; but they don't point to the same address in memory
+  (eqv? l1 l2)
+  #f 
+
+  ; this works for strings, symbols, and keywords too
+  (equal? "foo" "foo")
+  #t
+  (equal? 'foo 'foo)
+  #t
+  (define keyfoo :foo)
+  (equal? keyfoo :foo)
+
+There is one more variant, **eq?**. In S7, **eq?** is almost
+entirely the same as **eqv?**, but this is not always the case
+in all Scheme implementations. For the most part, in S7 you can
+just use **eq?** and **eqv?** interchangeably. Different implementations
+vary in their treatment of the empty list (the "null list"), which
+we will cover in detail later.
+
+.. code:: scm
+
+  ; is the null list the same as the null list?
+  (eq? (list) (list))
+  ; s7 says yes! (not all do)
+  #t
+  (eqv? (list) (list))
+  #t
+
+When in doubt, test your equality checks in the repl! But in general,
+numeric equivalence uses **=**, non-numeric and compound type equality uses 
+**equal?**, and pointer comparison uses **eq?** and/or **eqv?**.
+
+
+The **cond** special form allows us to provide a series of predicate
+and result pairs. Evaluation stops when the first predicate passes.
+
+.. code:: scm
+
+  ;; return some numbers for several values of x
+  (cond 
+    ((= x 1) (+ 9 x))
+    ((= x 2) (+ 8 x))
+    ((= x 3) (+ 7 x)))
+
+  ;; to illustrate that these are just pairs of expressions,
+  ;; here's a cond that returns 99
+  (cond (#f #f) (#t 99))
+
+If no clause succeeds, cond will return **unspecified** (at least in S7!). 
+To avoid this, it is common to return **#f** in an **else** clause. Interestingly,
+**else** is just a short-form for returning true - all we need
+is a predicate that passes.
+
+.. code:: scm
+
+  ;; return 10 for several values of x, or false for unhandled instance
+  (cond 
+    ((= x 1) (+ 9 x))
+    ((= x 2) (+ 8 x))
+    (else #f))
+
+  ;; because only false is false, this technically works too
+  ;; but you won't be popular coding like this.... 
+  (cond 
+    ((= x 1) (+ 9 x))
+    ((= x 2) (+ 8 x))
+    (0 #f))
+
+
+Again, if we want conditional side effects, we can use **begin**:
+ 
+.. code:: scm
+
+  ;; branching with side effects
+  (cond 
+    ((= x 1) 
+      (begin 
+        (post "x is 1") 
+        (+ 9 x)))
+    ((= x 2) 
+      (begin 
+        (post "x is 2") 
+        (+ 8 x)))
+    (else    
+      (begin 
+        (post "unhandled x!") 
+        #f)))
+
    
 
-Scope
------
+Scope and the let statement
+-----------------------------
 
-Functions can read variables from bindings that are active when the function runs.
+In computer science, 'scope' referes to where and when the binding
+of a symbol to a variable or function is in effect. Scheme is
+a *lexically scoped* language, allowing us to use functions and
+scopes in powerful ways, some of which we will look at in this book.
+To use Scheme effectively, and to take advantage of its lexical
+scoping for real time interactivity in Max, we need to 
+understand Scheme scoping and how to use the **let** form.
 
-LEFT OFF:
-- write about visibility of local variables in functions
-
-
-
+When we make definitions in scm file or send them to the interpreter 
+from Max messages, bindings execute in the **global scope**, also 
+refered to as the "top-level scope".  These bindings are visible in 
+any other expression or function, unless shadowed by bindings local 
+to the expression or function. 
 
 
 .. code:: scm
 
-  s4m> 
+  ;; make a global variable 
+  (define var 99)
+  s4m> 99
+
+  ;; define a function, it can access var
+  ;; if we tried to run this function prior to defining var
+  ;; we'd get an error
+  (define (my-fun)
+    (post "var:" var)
+    ; return var + 1
+    (+ 1 var))
+  s4m> my-fun
+
+  (my-fun)
+  s4m: var: 99
+  s4m> 100
+
+  ;; change var in the global scope & the change is visible 
+  ;; in the body of the function
+  (set! var 100)
+  s4m> 100
+
+  (my-fun)
+  s4m: var: 100
+  s4m> 101
+
+If we change a variable from an outer scope inside a function body,
+by using **set!**, this  will change the variable in the outer scope.
+A common convention in Scheme is to name functions ending in an exclamation
+mark if they have side-effects on external definitions. 
+
+.. code:: scm
+
+  ;; make a global var, var
+  (define var 99)
+  s4m> 99
+
+  ;; define a function that access and mutates var
+  (define (my-fun!)
+    ; set outer var, and return the value
+    (set! var (+ 1 var)))
+  s4m> my-fun!
+
+  (my-fun!)
+  s4m> 100
+
+  ; var has changed in the global scope
+  var
+  s4m> 101
+
+
+Function parameters create bindings that are active in the function body,
+making an inner scope. This is also called "function scope". The
+function scope will have the values of the arguments passed
+to the function bound to the symbols used as function parameters.
+
+.. code:: scm
+
+  ;; make a function with a local binding
+  (define (my-fun-2 var)
+    (post "var in my-fun-2:" var)
+    (set! var (+ 1 var))
+    (post "var in my-fun-2 now:" var)
+    ; return var
+    var)
+  s4m> my-fun-2
+
+  ;; call it
+  (my-fun-2 42)
+  s4m: var in my-fun-2: 42
+  s4m: var in my-fun-2 now: 43
+  s4m> 43
+
+  ;; make a global variable with the same name, 'var'
+  (define var 42)
+  s4m> 42
+  
+  ;; call our function with it, returns 43 as before
+  (my-fun-2 var)
+  s4m: var in my-fun-2: 42
+  s4m: var in my-fun-2 now: 43
+  s4m> 43  
+  
+  ;; check our global var - no change!
+  (post var)
+  s4m: 42
+  
+So what's going on here? The local binding of the symbol
+var in my-fun-2 is separate from the global binding;
+it's a new variable that happens to have the same name. This
+results in the new variable - var in the scope of my-fun-2 - 
+*shadowing* the global variable. When we use **set!** inside
+my-fun-2, only the local version is updated. After the 
+function exits, its scope becomes inactive and the symbol
+'var' will again refer to the global variable.
+
+The **let** special form creates a local scope. It takes
+an expression with a series of bindings of
+symbol and value, and a body that is executed with those
+bindings. The let statement returns the value of the
+last expression in the body. Within the body of the let,
+any bindings defined by the let's first clause will shadow
+any identically named bindings in outer scopes.
+Unlike a function, a let executes its body right away.
+
+.. code:: scm
+
+  ;; make a scope with two local bindings
+  (let 
+    ((a 1) (b 2)) ; bindings
+    (+ a b))      ; body, does addition, returns value
+  s4m> 3
+
+  ;; the body can have many expressions
+  ;; the value returned by let is the last one
+  (let ((a 1) (b 2))   ; bindings
+    (post "a:" a)      ; body with 3 expressions
+    (post "b:" b)
+    (+ a b))          
+  s4m: "a:" 1
+  s4m: "b:" 2
+  s4m> 3
+
+As far as scoping rules are concerned, variables defined
+by a let are treated in the body of the let *exactly* the 
+same way as function paramaters are treated in the body of a
+function. Under the hood, they are equivalent. These two
+are completely equivalent:
+
+.. code:: scm
+
+  ; use a let
+  (let ((a 1) (b 2)) 
+    (+ a b))
+  s4m> 3
+
+  ; use a lambda and call it immediately
+  ((lamdba (a b)(+ a b)) 1 2)
+  s4m> 3
+
+In Scheme, a let literally *is* an immediately executed lambda. 
+This is worth taking a moment to understand!
+
+
+A regular let has all bindings defined at the same time,
+(order not guaranteed) meaning that a binding cannot refer to a previous binding:
+
+.. code:: scm
+
+  ; an error, the second binding won't work!
+  (let ((a 2) (b (* a a)))
+    (+ a b))
+ 
+However, we can do this if we use **let***: 
+
+.. code:: scm
+
+  ; OK!
+  (let* ((a 2) (b (* a a)))
+    (+ a b))
+  s4m> 6 
+
+Under the hood, this actually executes as two nested lets:
+
+.. code:: scm
+
+  (let ((a 2))
+    (let ((b (* a a)))
+      (+ a b)))
+
+We can use a let in the body of a function to create temporary
+variables local to a function. 
+
+.. code:: scm
+
+  ; define a function with an inner let
+  ; the last sexpr in the let is returned by the let
+  ; and thus also by my-fun
+  (define (my-fun a) 
+    (let ((b 1) (c 2))
+      (+ a b c)))
+  
+  (my-fun 3)
+  s4m> 6
+
+    
+The temporary scope that is created by a let (or a function) is called an *environment*.
+It's a frame in memory with a series of bindings. Normally, it's destroyed
+as soon as the let returns: there are no more references to the bindings
+in the let, so the garbage-collector cleans up and deletes the environment. 
+But if we return a function that has references to the bindings in the let, 
+the environment will live on. This is called a *closure* in many languages,
+and is the key to much of the power of Scheme and Lisp. You might hear this
+refered to as **"let over lambda"**. 
+
+.. code:: scm
+
+  ; create a function inside a let, returning the function
+  (define add-42
+    (let ((to-add 42))
+      (lambda (x) 
+        (+ to-add x))))
+
+  (add-42 3)
+  s4m> 45
+
+In the above example, the lambda function has a reference to the temporary
+variable "to-add", and uses it in the body of the function. The function 
+is returned from the let (it's the last expression in the let) and bound
+to the name "add-42" in the define. Because we are holding on to the 
+reference to the function, this means the environment lives
+on after the let is finished.  The "to-add" variable
+in the lambda is the let's variable, it's the variable that existed in scope
+*when the lambda executed*. This is called **lexical scope**. 
+
+Here's an example demonstrating that the scope of **to-add** in the let
+is separate from global scope:
+
+.. code:: scm
+
+  ; make a global var, to-add
+  (define to-add 1)
+
+  ; create a function inside a let, with its own to-add variable 
+  (define add-42
+    (let ((to-add 42))
+      (lambda (x) 
+        (+ to-add x))))
+
+  ; calling add 42 here at global scope level still uses the inner version
+  (add-42 3)
+  s4m> 45
+  (set! to-add 2)
+  
+  (add-42 3)
+  s4m> 45
+
+
+
+Nesting functions and lambdas is a way to make *objects as functions*. 
+These are functions that have some private state. The equivalence of lets 
+and lambdas means we can intermix them freely and we have a lot of flexibility
+in how we implement function objects. Let's make a function
+that counts how many times it has been called:
+
+.. code:: scm
+
+  ; make a counter variable in a let
+  (define counter-fun
+    ; count is a variable private to this function
+    (let ((count 0))
+      ; the lambda gets returned from the let and bound to counter-fun
+      (lambda () 
+        ; mutate our private variable and post
+        (set! count (+ 1 count))
+        (post "Call" count))))
+  
+  (counter-fun)
+  s4m: Call 1
+  (counter-fun)
+  s4m: Call 2
+
+The **count** variable is private to counter-fun. We
+have no other way of accessing it. 
+
+We can also accomplish something similar with nested functions.
+We could make this more sophisticated by allowing us
+to specify an increment value for each count. We'll have 
+a builder function make our counter: 
+
+.. code:: scm
+
+  ; a function that builds a counter function
+  (define (build-counter increment)
+    (let ((count 0))
+      (lambda () 
+        (set! count (+ 1 increment))
+        (post "Count is now:" count))))
+  
+  (define counter (build-counter 2))
+  
+  (counter)
+  s4m: Count is now: 2
+  (counter)
+  s4m: Count is now: 4
+ 
+ 
+Finally, here is an example of the same pattern where
+the function returned by the lambda, also itself returns a 
+value based on the private variable:
+
+.. code:: scm
+
+  ; a function that builds another function and tracks calls
+  (define (build-adder to-add)
+    ; a local variable storing number of times we are called
+    (let ((times-called 0))
+      ; a lambda to return the function-object
+      (lambda (x) 
+        ; update the local variable and post to the console
+        (set! times-called (+ 1 times-called))
+        (post "I have done" times-called "additions!")
+        ; return the results of our addition
+        (+ x to-add))))
+
+  (define add-3 (build-adder 3))
+
+  (add-3 10)
+  s4m: "I have done 1 additions!"
+  s4m> 13
+
+  (add-3 12)
+  s4m: "I have done 2 additions!"
+  s4m> 15
+ 
+
+Note in the above that we did not need to explicitly 
+use **to-add** in the bindings of our let. Because lets and
+lambdas are equivalent in scope creation, the to-add variable
+and the times-called variable will both be persisted in the 
+environment that the lambda function brings back with itself. 
+In a future section, we will look at how these patterns can be
+used to make sophisticated and flexible object oriented systems.
+ 
 

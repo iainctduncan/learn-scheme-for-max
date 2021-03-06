@@ -7,7 +7,7 @@ Learn Scheme For Max & S74 Scheme
 ======================================
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :caption: Contents:
 
     introduction
