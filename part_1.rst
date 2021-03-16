@@ -876,27 +876,30 @@ won't change anything.
 Lists, in more depth
 --------------------
 
+.. TODO clarify that operations make new lists
+
 As we previously discussed, under the hood, Lips lists are *linked-lists*.
-In the computer's memory, every cell in a list includes
+In the computer memory, every cell in a list includes
 a value, and a pointer to the next item. The last item in a list has a pointer
 to a hidden cell that holds the **null list**. So if we look at a list of three
 elements, **'(1 2 3)**, there are three cells with numbers and pointers, and
-one hidden cell with the null list. The third cell's pointer points there. Or
+one hidden cell with the null list, to which the third cell's pointer points. Or
 another way of thinking of it is that there are three cells, the last of which
-points to the null list, which is magical and gets special rules. 
+points to the null list, which is a special case.
 
-Ok, I admit, Lisp list functions are weird, with names like **car**, **cdr**, and **cons**.
+In this section we will look briefly at the classical Lisp list functions. 
+I will admit these Lisp list functions have bizarre names: **car**, **cdr**, **cons**, etc.
 While these names seem annoying at first, they have stuck around
 as they are easy to type, and will become second nature pretty quickly.
-They come from operating instruction names on very old IBM computers.
+(They originally come from operating instruction names on very old IBM computers!)
 
-We can get the first item of a list using the **car** function.
-We can get the *rest* of the list, by using the **cdr** function, which
-always returns a list. (Well, not *always-always*, but for now let's say always:
-if used on a *proper-list*, cdr always returns a list). cdr returns a list
-because if we start at item 2 in our liked list, having chopped off item 1 (the head), 
-the chain of links will still work to the end of the list. An example is worth
-a thousand words here:
+We can get the first item of a list using the **car** function, and
+we can get the *rest* of the list, by using the **cdr** function. We can think of
+the combination of car and cdr as taking off the head of the list, which leaves us
+with one single item (the car) and the remaining linked list (the cdr). Thus cdr,
+if called on a proper list, always returns a list. Though the list it returns
+could be the null list, if the head was the last proper item. 
+An example is worth a thousand words here:
 
 .. code:: scm
   
@@ -931,14 +934,18 @@ is like chopping off the head twice - and we still get a list:
   (null? (cdr (cdr (cdr l))))
   s4m> #t
 
-So remember, a proper list is a set of value/pointer entries, where
+  ; but is also still a list!
+  (list? (cdr (cdr (cdr l))))
+  s4m> #t
+
+So it's important to remember that a proper list is a set of value/pointer entries, where
 the last one points to the null list. The value-pointer pairs
-have a special name, they are called **cons cells**.
+have a special name: **cons cells**.
 
 In addition to making lists with the list function, we can use the **cons** function.
 The list function does the magic for us, while **cons** involves us in the
-underlying linked-list. We use cons to add a new cons cell
-to the *head* of a list.
+underlying linked-list. We use cons to add a new cons cell by passing in
+an item, and a list that our new cell should link to.
 
 .. code:: scm
  
@@ -946,7 +953,27 @@ to the *head* of a list.
   (cons 0 (list 1 2 3))
   s4m> (0 1 2 3)
 
-To make a list from scratch with cons, we would work backwards, starting
+Note that cons *makes a new list*. This is an important distinction. Making
+a new list by adding a cell to the head doesn't change an old list starting
+at a different head:
+
+.. code:: scm
+ 
+  (define list-a (1 2 3))
+  s4m> (1 2 3)
+
+  (define list-b (cons 0 list-a))
+  s4m> (0 1 2 3)
+
+  list-a
+  s4m> (1 2 3)
+
+  list-b 
+  s4m> (0 1 2 3)
+
+In the above example, the cdr of list-b *is* list-a.
+
+To make a list from scratch with cons, we must backwards, starting
 with the null list. And we make the null list by quoting the printed representation
 of an empty list, **'()**.
 
@@ -959,17 +986,19 @@ of an empty list, **'()**.
   (cons 3 '())
   s4m> (3)
 
-  ; make a list, in a cumbersome way
+  ; make a list by cons'ing 3 times
   (cons 1 (cons 2 (cons 3 '())))
   s4m> (1 2 3)
 
 If we want to add to the end of a list, we need to use the **append** function,
-which takes multiple lists as arguments and joins them. This means that, unlike
-cons, the item to be added needs to be a list:
+which takes multiple lists as arguments returns a new list consisting
+of the joined argument lists. This means that, unlike
+cons, the item to be added needs to itself be a list. Like cons,
+the result is a new list, and the original lists are unchanged.
 
 .. code:: scm
 
-  ; join two lists
+  ; make a list, by joining two lists
   (append (list 1 2 3) (list 4 5 6))
   s4m> (1 2 3 4 5 6)
 
@@ -979,6 +1008,10 @@ cons, the item to be added needs to be a list:
 
   (append l (list 4))
   s4m> (1 2 3 4)
+
+  ; note that l is unchanged!
+  l
+  s4m> (1 2 3) 
 
   ; or with quote
   (append l '(5))
@@ -991,12 +1024,10 @@ Append can have as many arguments as you want
   (append (list 1 2) (list 3 4) (list 5 6))
   s4m> (1 2 3 4 5 6)
 
-.. LEFT OFF
-
 
 Note that if you call append with a final element that is *not* a list,
-you won't get an error.. but you also won't get a proper list. This is
-because the final item is a simple value and not a value/pointer pair.
+you won't get an error... but you also won't get a proper list. This is
+because the final item is an atomic value instead of a value/pointer pair.
 
 .. code:: scm
 
@@ -1004,8 +1035,8 @@ because the final item is a simple value and not a value/pointer pair.
   s4m> (1 2 . 4)
 
 The dot before 4 indicates that the list stopped being a proper list
-at the third item. Improper lists are used in various places, but typically
-only as pairs, also called *dotted pairs*. We get them when we use cons, *without* ending our chain
+at the third item. Improper lists are used in various places, but most typically
+as pairs, also called *dotted pairs*. We get them when we use cons, *without* ending our chain
 with the null list:
 
 .. code:: scm
@@ -1033,9 +1064,97 @@ This means we can use car and cdr, but there is no cdr of the second element.
   (cdr (cdr my-pair))
   s4m> Error: cdr argument 2 is an integer, but should be a pair.
 
-.. TODO the cons and cdr shortcuts
+Dotted-pairs and improper lists are important to understand as you'll
+use them when looping through data structures such as association
+lists and hash-tables, both of which have pairs of key and value.
 
-.. TODO some sort of conclusion on lists, yo
+Finally, and these gets almost silly but are convenient, there
+are shortcuts for combinations of car and cdr that are useful
+when working with nested lists. These can always be replaced
+by nested combinations of car and cdr, so you don't need to know
+them. But you are quite likely to see them in other lisp code,
+so it's worth knowing they exist, and they can make some code more
+readable (or at least, to someone who knows these oddball functions!).
+
+.. code:: scm
+
+  ; car of nested list
+  (car (list (list 0 1) (list 2 3) (list 4 5)))
+  s4m> (0 1)
+
+  ; cdr of nested list
+  (cdr (list (list 0 1) (list 2 3) (list 4 5)))
+  s4m> ((2 3) (4 5))
+
+  ; caar gets the car of the car
+  (caar (list (list 0 1) (list 2 3) (list 4 5)))
+  s4m> 0
+
+  ; cdar gets the cdr, of the car - which is a list
+  (cdar (list (list 0 1) (list 2 3) (list 4 5)))
+  s4m> (1)
+
+  ; cadr gets the car, of the cdr 
+  ; aka the first item of the cdr of the outer list 
+  (cadr (list (list 0 1) (list 2 3) (list 4 5)))
+  s4m> (2 3)
+
+  ; cddr gets the cdr of the cdr, which is a list of lists  
+  (cddr (list (list 0 1) (list 2 3) (list 4 5)))
+  s4m> ((4 5))
+
+This continues on to 5 letter combinations, like *cadar*, but
+honestly, you don't need to know these. But as you may well encounter
+code with functions consisting of strings of c,a,d, and r, know
+you'll know what you're seeing.
+
+Optional function arguments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Know that we know about lists, we can use them for creating functions
+that can be called with a variable number of arguments.
+This is done by using dotted notation in the function argument, which will
+put any arguments past the explicitly named ones into a list. This list will be
+the null list if no additional arguments are given:
+
+  
+.. code:: scm
+
+  ; one mandatory argument, and any number of optional
+  (define (my-fun x . args)
+    (post "called with" (length args) "optional args")
+    (post "optional args:" args))
+  s4m> my-fun
+
+  (my-fun 1)
+  s4m: called with 0 optional args
+  s4m: optional args: ()
+  s4m> '() 
+
+  (my-fun 1 2 3)
+  s4m: called with 2 optional args
+  s4m: optional args: (2 3)
+  s4m> '() 
+
+
+This can be done with lambda as well, but lambda has an additional option.
+If the argument list for a lambda is just a symbol, this symbol will be a list
+of all the arguments.
+
+.. code:: scm
+
+  ; a lambda that bundles all its args into a list
+  (define my-lambda (lambda args (post "args:" args)))
+  s4m> my-lambda
+   
+  (my-lambda 1 2 3)
+  s4m: args: (1 2 3)
+  s4m> '() 
+
+.. TODO keyword arguments and default value args
+
+.. LEFT OFF 2021-03-16
+
 
 .. TODO vectors 
 
