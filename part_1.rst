@@ -8,13 +8,14 @@ Max and having both a file editor and the built in s4m.repl bpatcher open, with
 the Max console in view. You'll want to be able to send lines of code to the 
 interpreter and see the results in the console.  If you haven't already, I recommend watching the tutorial videos
 on the "Music With Lisp" youtube channel on installation and first steps. These
-will get you up and running, sending code to your s4m object. To send code from your editor
-to s4m, check out the s4m cookbook example on editor integration. It's worth getting
-this going as it will make learning a lot more pleasant. But you can definitely
+will get you up and running, so that you are sending code to your s4m object and 
+seeing the results in the Max console. To send code from your editor
+to s4m, check out the s4m cookbook example on editor integration. If you plan on using
+S4M extensively, it's well  worth getting
+this going as it will make working a lot more pleasant. But you can certainly
 get started just using the **s4m.repl** bpatcher too.
 
-
-In the code sections here, I show code as we send it to the intepreter and the
+In the code sections in this tutorial, I show code as we send it to the intepreter and the
 results back from the interpreter. Lines that start with a semi-colon are comments
 and don't get run by the interpreter. Lines with no prefixing are expressions
 we send to s4m, whether from the built in text editor bpatcher or
@@ -27,9 +28,8 @@ how to do this). Let's quickly make sure we're clear on this:
   ;; a comment, you can skip typing this in
 
   ;; an expression we send to s4m, it has no prefix
+  ;; and its return value from the interpreter
   (+ 1 1)
-
-  ;; the return value from the interpreter
   s4m> 2
 
 Some Scheme expressions have side effects. For example, the
@@ -40,7 +40,7 @@ Console output starts with **s4m:** (note the colon)
 .. code:: scm
 
   ;; an expression asking the intepreter to log to the console
-  (post "testing" 1 2 )
+  (post "testing" 1 2)
   s4m: testing 1 2 
 
 If you have set the s4m attribute **log-null** to true (you can use
@@ -63,13 +63,13 @@ will thus show:
 If you are able to successfully duplicate the above, we're ready to begin.
 
 
-Syntax and Evaluation
----------------------
+Basic Syntax 
+------------
 
 Scheme syntax is very simple: everything in the language is done with **s-expressions**.
 (**sexprs** for short.) A simple s-expression is either one **atom** (such as a symbol, number, string),
-or a series of atoms surrounded by parentheses, while a nested s-expression can contain
-inner s-expressions. 
+or a series of atoms surrounded by parentheses. S-expressions can be nested to any depth 
+we want. 
 When we send an sexpr to the interpreter to be **evaluated**, the interpreter evaluates
 all nested expressions, from the inside out, ending with evaluation of the outer sexpr.
 Evaluation of a parenthetical s-expr is done by calling the first atom as a function, 
@@ -80,21 +80,23 @@ them as synonyms for now.)
 
 .. code:: scm
 
-  ;; evaluating an sexp that calls the function bound to the symbol '+'
-  ;; evaluating this sexp calls the function with arguments and returns value 2
+  ; evaluating an sexp that calls the function bound to the symbol '+'
+  ; evaluating this sexp calls the function with arguments and returns value 2
   (+ 1 1)
   s4m> 2
   
-  ;; post is a function, and we can pass nested sexprs to it
+  ; post is a function, and we can pass nested sexprs to it
+  ; post returns null, but prints as side effect
   (post "1 + 1 is:" (+ 1 1))
   s4m: 1 + 1 is: 2
+  s4m> ()
 
 This syntax is called **prefix notation** - functions are in the first
 slot, followed by as many arguments as the function will permit.
 
 .. code:: scm
 
-  ;; add more numbers!
+  ; add more numbers!
   (+ 1 2 3 4)
   s4m> 10
  
@@ -129,19 +131,19 @@ get to later...)
 
 .. code:: scm
 
-  ;; define a variable by binding the symbol 'a' to the value 99
+  ; define a variable by binding the symbol 'a' to the value 99
   (define a 99)
   s4m> 99
 
 This function has a **side-effect**, meaning it does something other than
-just return a value. It's side effect is binding the variable. In s7 (but not all Schemes), 
+just return a value. Its side effect is binding the variable. In s7 (but not all Schemes), 
 define also *returns* the value that was bound. 
 Which means we could, if we really wanted, do something like this:
 
 .. code:: scm
 
-  ;; both b and a will be bound to 99
-  ;; not recommended, here for illustration only!
+  ; both b and a will be bound to 99
+  ; not recommended, here for illustration only!
   (define b (define a 99))
   s4m> 99
 
@@ -152,21 +154,21 @@ is depending on the form. Evaluating a basic type returns the value itself
  
 .. code:: scm
 
-  ;; evaluating a simple type like a number returns the value
+  ; evaluating a simple type like a number returns the value
   99
   s4m> 99
 
   (define foo 99)
   s4m> 99
 
-  ;; evaluating a variable returns the value bound to the variable
+  ; evaluating a variable returns the value bound to the variable
   foo
   s4m> 99
 
 Once a variable has been created, we can assign a new value to it with the **set!** function.
-Naming functions with side-effects with a trailing exclamation mark is a common Scheme idiom.
-In S7, set! also returns the value set. We can only set a variable that has already
-been defined. In S7 (but not all Schemes), we can also set a new value by just
+It's a common Scheme convention to name functions with side-effects with a trailing exclamation mark.
+In s7, set! also returns the value set. We can only set a variable that has already
+been defined. In s7 (but not all Schemes), we can also set a new value on an existing variable by just
 redefining.
 
 .. code:: scm
@@ -192,40 +194,6 @@ redefining.
   (set! z 999)
   s4m> ERROR unbound variable z
 
-
-Keywords
---------
-
-Some Lisp dialects, including S7, have **keywords**. A keyword is a symbol that
-starts with a colon and *always evaluates to itself*. A keyword can not be bound
-to anything other than itself - it can't be the name of a variable or function. 
-In this way, it acts like a simple type, such as
-a string or number. This is convenient in Max, as we can see
-at a glance that a symbol starting with a colon is a keyword, no matter the context.
-It doesn't matter if we're not sure whether it will get evaluated, because evaluation
-won't change anything. This means a variable can hold a keyword, but a keyword can't be a variable.
-
-When we get to hash-tables and dictionaries, you'll see that keywords are commonly
-used as keys. Conveniently, Max will let us use them in many places as well, including
-table and dict names.
-
-.. code:: scm
-  
-  ;; evaluating a keyword has no change
-  ;; much like evaluating a simple type
-  :my-keyword
-  s4m> :my-keyword
-
-  (define var-holding-a-keyword :my-keyword)
-  s4m> :my-keyword
-
-  var-holding-a-keyword
-  s4m> :my-keyword
-
-  (define :my-keyword 99)
-  s4m> Error: keywords are constants 
-  
-
 Functions
 ---------
 
@@ -239,25 +207,25 @@ with whatever arguments are passed in at call time substituted for the parameter
 
 .. code:: scm
 
-  ;; a lambda expression that takes an argument, x, and returns x + 1
-  ;; it returns a lambda procedure
+  ; a lambda expression that takes an argument, x, and returns x + 1
+  ; it returns a lambda procedure
   (lambda (x) (+ 1 x))
   s4m> #<lambda (x)>
 
-  ;; the same, but binding the function to the symbol my-fun
+  ; the same, but binding the function to the symbol my-fun
   (define my-fun (lambda (x) (+ 1 x)))
   s4m> my-fun
 
-  ;; now call the function
+  ; now call the function
   (my-fun 2)
   s4m> 3
 
-  ;; this means we could nest the lambda form in order to call it
-  ;; but this is not very readable, so less commonly done
+  ; this means we could just nest the lambda form in order to call it
+  ; but this is not very readable, so less commonly done
   ((lambda (x) (+ 1 x)) 3)
   s4m> 4
 
-  ;; a lambda form specifying a procedure with two parameters
+  ; a lambda form specifying a procedure with two parameters
   (define my-adder (lambda (a b) (+ a b)))
   s4m> my-adder
 
@@ -271,15 +239,15 @@ it's exactly the same.
 
 .. code:: scm
 
-  ;; define a function called add-1, that adds 1 to its argument
+  ; define a function called add-1, that adds 1 to its argument
   (define (add-1 x) (+ 1 x))
   s4m> add-1
 
-  ;; this is no different from the below
+  ; this is no different from the below
   (define add-1 (lambda (x) (+ 1 x)))
 
-  ;; in S7 we could do this, because define returns the value bound
-  ;; again, not recommended, but a useful illustration
+  ; in S7 we could do this, because define returns the value bound
+  ; again, not recommended, but a useful illustration
   ((define (add-1 x) (+ 1 x)) 2)
   s4m> 3
 
@@ -305,61 +273,772 @@ We will explain why later on. For now, just know this is null, and it means "emp
 
 .. code:: scm
   
-  ;; send the number 99 out the first outlet
-  ;; this function also returns the null list
+  ; send the number 99 out the first outlet
+  ; this function also returns the null list
   (out 0 99)
-  s4m>
-  ;; pretend we set @log-null to 1
+
+  ; pretend we set @log-null to 1
   (out 0 99)
   s4m> ()
 
-If we want so send out multiple values, we need to make a list. We will look at lists in detail soon,
-but for now, it's done like so:
+From now on, the tutorial will not always show the returned null value, such as after
+calls to post, as it does clutter up examples.
+
+If we want so send out multiple values, so that the output is a Max list message, 
+we use the **list** function: 
 
 .. code:: scm
   
-  ;; send the list 1 2 3 out the first outlet
-  ;; the list function returns a list
+  ; send the list 1 2 3 out the first outlet
+  ; the list function returns a list
   (out 0 (list 1 2 3))
 
 
-The **post** function allows us to log to the Max console. It accepts any number of arguments,
+The **post** function logs to the Max console. It accepts any number of arguments,
 automatically converting them to string representations and putting spaces between them. It is
-also being called for its side effect and so returns nothing. You'll see that the prompt
-from post is **s4m:** instead of the repl return prompt of **s4m>**
-
+also being called for its side effect and so returns null. You'll see that the prompt
+from post printed output is **s4m:** instead of the repl return prompt of **s4m>**
 
 .. code:: scm
   
-  ;; post to console
+  ; post to console, with log-nulls set to true
   (post 1 2 3)
   s4m: 1 2 3
-
-  ;; post a variable
+  s4m> ()
+  
+  ; post a variable
   (define a 99)
+  s4m> 99
+
   (post "a is" a)
   s4m: a is 99
-  
-During development, I recommend attaching a **print s4m-out:** object to your outlet, giving you
+  s4m> () 
+ 
+During development, it can be helpful to attach a **print s4m-out:** object to your outlet, giving you
 all the output in your Max console while you work.
 
 .. code:: scm
   
-  ;; shows return value (if @log-nulls is 1) and the printed output from our print object
+  ; shows return value (if @log-nulls is 1) and the printed output from our print object
   (out 0 :foobar)
   s4m> ()
   s4m-out: :foobar
 
 
-.. TODO  the basic types we use in Max
+
+Basic Types
+-------------
+Scheme is dynamically typed, meaning that we do not have to specify in advance of what type
+a variable will be, but variables do have types. 
+
+Booleans and Predicates
+^^^^^^^^^^^^^^^^^^^^^^^
+
+In Scheme, we use **#true** and **#false** for boolean values, which can also be written as 
+**#t** and **#f**.  A predicate function is a function that checks the value of an expression
+against some criterion and returns a boolean. 
+In Scheme, predicate functions normally have names ending in a question mark.
+
+.. code:: scm
+ 
+  ; make a boolean variable
+  (define my-boolean #t)
+  s4m> #t
+
+  ; check if it is a boolean
+  (boolean? my-boolean)
+  s4m> #t
 
 
-Compound Types: Lists, Vectors, & Hash-Tables
----------------------------------------------
+Some other useful predicates: 
 
-In addition to our basic types, Scheme includes a number of compound types.
-While lists are the most important, and understanding lists is key to using
-Lisp effectively, they are the most complex, so we'll work up to them.
+.. code:: scm
+
+  ; check if a variable is a function/procedure with procedure?
+  (procedure? post)
+  s4m> #t
+
+  ; the defined? predicate checks if a symbol is a defined variable
+  (defined? foo)
+  s4m> #f
+
+  (define foo 1)
+  s4m> 1
+
+  (defined? foo)
+  s4m> #t
+
+We can check whether something is null with the **null?** predicate. 
+
+.. code:: scm
+  
+  ; the out function returns null, so...
+  (null? (out 0 99))
+  s4m> #t
+
+As an aside, remember that null is actually *the null list*, meaning
+that using the **list?** predicate on the return value will also be true:
+
+.. code:: scm
+  
+  ; the out function returns null, and null is the null list, so...
+  (list? (out 0 99))
+  s4m> #t
+
+  ; just for fun...
+  (boolean? (list? (out 0 99)))
+  s4m> #t
+
+
+
+
+Numerical Types
+^^^^^^^^^^^^^^^
+
+Like most programming languages, Scheme supports integers and floats, but in Scheme, both are sub-types
+of the **number** type. In Scheme, floats are **inexact numbers**, while integers are **exact numbers**.
+Unlike many other languages, Schemes also support fractions as a type, which is very 
+helpful in music.  
+There are number of predicate functions and conversion functions for working with numeric types,
+and there are some rules for automatic conversion you will want to know. The examples below provide enough to
+work with in Max, and for further details you can consult various online resources. 
+
+.. code:: scm
+  
+  ; make an integer
+  (define x 1)
+  s4m> 1
+
+  (integer? x)
+  s4m> #t
+
+  (define y 2.0)
+  s4m> 2.0
+  
+  ; y is not an integer
+  (integer? y)
+  s4m> #f
+
+  ; y is an inexact number
+  (inexact? y)
+  s4m> #t
+
+  ; but both x and y are numbers, and real numbers
+  (and (number? x) (number? y)
+  s4m> #t
+
+  (and (real? x) (real? y))
+  s4m> #t
+
+  ; mixing inexacts and exacts creates other inexacts
+  (/ 1 0.5)
+  s4m> 2.0
+
+  ; integer math creates fractions
+  (define z (/ 3 4))
+  s4m> 3/4
+
+  ; these are still exact
+  (exact? z)
+  s4m> #t
+
+  ; which we can later cast to inexact
+  (exact->inexact (/ 3 4))
+  s4m> 0.75
+
+  ; exacts stay exact until mixed with inexact
+  (* 1.0 (/ 3 4))
+  s4m> 0.75
+
+Because of the support for fractions, we can stay exact through a chain of operations,
+only converting at the end, a vastly preferable situation for converting
+tuning or timing fractions compared to languages like JavaScript or C. This
+does mean that we need to be more explicit in coversions however, and so
+there are some helpers in the form of **floor**, **ceiling**, and **round**.
+
+.. code:: scm
+  
+  (floor 1.1)
+  s4m> 1.0
+
+  (ceiling 1.1)
+  s4m> 2.0
+
+  (round 1.5)
+  s4m> 1.0
+
+  (round 1.51)
+  s4m> 2.0
+  
+ 
+Symbols
+^^^^^^^
+Symbols are identifiers in Scheme that can be used as the name for 
+functions and variables. They can hold many more characters than in most
+languages, because Lisps only use whitespace and parentheses for syntax.
+In Scheme, it's very common to included hyphens, exclamation marks, and
+questions marks in names. 
+
+.. code:: scm
+  
+  ; symbols for predicates usually end in question marks 
+  (define is-one? (lambda (x) (= 1 x)))
+
+Evaluating a symbol returns the value stored at that symbol
+  
+.. code:: scm
+  (define answer 42)
+  sm4> 42
+
+  answer
+  s4m> 42
+
+
+Strings and Characters
+^^^^^^^^^^^^^^^^^^^^^^
+
+Scheme also has a string type and a character type. Now strictly speaking, Max doesn't really 
+do strings - to Max they are just symbols with quotation marks. 
+So we won't discuss either of these in much detail, especially 
+characters. A good rule of thumb in Max is to avoid strings unless you *need*
+a string. In Scheme, Strings use double quotes. 
+
+.. code:: scm
+  
+  (define foo "foo")
+  s4m> "foo"
+
+  (define bar "bar")
+  s4m> "bar"
+
+  ; join strings with string-append
+  (string-append foo bar)
+  "foobar"
+
+s7 includes a variety of string conversion routines, which one can look 
+up in the online Scheme references (Dybvig is my recommendation). 
+Some of the more useful ones are:
+ 
+.. code:: scm
+  
+  (number->string 1)
+  s4m> "1"
+
+  (string->number "1")
+  s4m> 1
+  
+  ; note that string->number and number to string are smart about floats
+  (string->number "1.0")
+  s4m> 1.0
+
+  ; and even fractions!
+  (string->number "3/4")
+  s4m> 3/4
+
+  ; of course, there's a predicate...
+  (string? (number->string 1))
+  s4m> #t
+
+We can also go back and forth between symbols and strings.
+
+.. code:: scm
+  
+  ; make a symbol from a string
+  (symbol "foo")
+  s4m> foo
+  
+  ; and its predicate
+  (symbol? (symbol "foo"))
+  s4m> #t
+
+  ; round and around
+  (string? (symbol->string (symbol "foo")))
+  s4m> #t 
+
+There are also functions for extracting characters from strings and building
+up strings, but one needs them very infrequently working in Max, so we leave
+this to the reader to explore online. That's all we will say about strings in 
+this crash course. 
+
+
+.. TODO comparison with Max symbols and strings
+
+
+Lists - a brief introduction
+----------------------------
+Lists are the most important compound data type in Lisps, including Scheme.
+So much so that Lisp originally stood for "List Processing"! We'll be
+looking at lists in detail later, but right now we have a bit of a 
+chicken-and-egg situation: we need to know at least a little bit about them for the
+next section to make sense.
+
+We make a list using the **list** function:
+
+.. code:: scm
+  
+  ; make a list
+  (list 1 2 3)
+  s4m> (1 2 3)
+
+  ; store a list in a variable
+  (define l (list 1 2 3))
+  s4m> (1 2 3)
+
+We can retrieve individual members of a list by index using **list-ref**,
+and we can set them using **list-set!**:
+
+.. code:: scm
+  
+  ; get value of l at index 0
+  (list-ref l 0)
+  s4m> 1
+  
+  ; set value of l at index 0
+  (list-set! l 0 99)
+  s4m> 99
+
+  ; eval the variable, and we get the (updated) list
+  l
+  s4m> (99 2 3)
+
+
+In s7, we can also use what is called *applicative-syntax*, where
+we use a list in the function slot of a paranthetical expression, 
+and put the index in the argument slot. Note that the syntax
+for set is a bit unusual, we use the syntax for getting an item
+to refer to a location, and the location is the argument to **set!**.
+
+.. code:: scm
+  
+  ; get value of l at index 0, applicatively
+  (l 0)
+  s4m> 1
+
+  ; set using applicative syntax
+  (set! (l 0) 100)
+  s4m> 100
+   
+  l
+  s4m> (100 2 3)
+
+Lists look at first like an array in other languages, but under the hood, lists 
+in Lisp are actually implemented as *linked lists*. There is a whole family
+of functions for working with lists as linked-lists, and we'll get to
+those soon.   
+
+The astute reader will have noticed that the *printed representation*
+we get back when evaluating a variable that holds a list (or a call
+to the list function), looks an awful lot like an s-expression. In
+the above example, looks just like a call to a function called "100".
+Hold that thought, it's going to become very important! 
+
+
+Evaluation and Quoting 
+-----------------------
+
+At this point, we are able to make variables and functions, and we know about 
+basic types and lists. It's time for our first look at what make the Lisp family
+of languages unusual. 
+
+When we send an s-expression or atom to the interpreter to run, we
+are asking the interpreter to *evaluate* the expression. We can
+also do this explicitly using the **eval** function.  In the case 
+of a basic number or string, evaluation doesn't change anything - it
+returns the same value:
+
+.. code:: scm
+  
+  ; send a number to the interpreter, and we get the same thing back
+  99
+  s4m> 99
+
+  ; as evaluating doesn't change it, the eval function won't either
+  (eval 99)
+  s4m> 99)
+
+  ; thus nesting evals of a number doesn't either  
+  (eval (eval 99))
+  s4m> 99
+
+  ; strings also evaluate to themselves
+  (eval "foobar")
+  s4m> "foobar"
+
+However, when we evaluate a **symbol**, the evaluation process returns that which 
+the symbol *points to*. Which of course requires that either this symbol is 
+defined in the language, or that we have defined it ourselves. 
+The value pointed to could be an atomic data item, in the case of a variable, 
+or a function, in the case of a function name:
+
+.. code:: scm
+  
+  (define my-var 99)
+  s4m> 99
+  
+  my-var
+  s4m> 99
+  
+  (eval my-var)
+  s4m> 99
+
+  (define (add-1 x) (+ 1 x))
+  s4m> add-1
+ 
+  ; evaluating the symbol that points to the function returns the function
+  add-1
+  s4m> add-1 
+
+  (eval add-1)
+  s4m> add-1
+
+
+But what if we evaluate a list? Hang on to your hats! 
+
+.. code:: scm
+
+  ; evaluate a list
+  (eval (list 1 2 3))
+  s4m> Error; attempt to apply an integer 1 to (2 3) in (1 2 3)?
+
+We get an error message about "applying an integer", giving us a clue
+what's going on. Let's try that again, but instead of the just using the list function,
+we will add the use of the symbol function, which we recall creates a symbol from a string:
+
+.. code:: scm
+
+  ; make the symbol post, from a string 
+  (symbol "post")
+  s4m> post
+
+  ; make a list, starting with the symbol 
+  (list (symbol "post") 1 2 3)
+  s4m> (post 1 2 3)
+
+  ; evaluate this list, and we see we have called the post function
+  (eval (list (symbol "post") 1 2 3))
+  s4m: 1 2 3
+  s4m> ()
+
+  ; or more concisely ...
+  (eval (list post 1 2 3))
+  s4m: 1 2 3
+  s4m> ()
+
+Now we can see what is going on. Evaluating a list **is** the same as calling
+a function. Literally the same. The first element of the list is taken as indicating
+a function, and the rest are its arguments. Scheme syntax consists of lists.
+We can build them with functions or special forms, and we can call them as functions
+with eval. 
+
+Eval has a counterpart that does the opposite: **quote**. When we use
+quote, we tell the interpreter *to skip* evaluation of something that it would otherwise
+evaluate. In a normal function call, expressions used as arguments are evaluated
+*prior* to the function call, and the values returned are passed to the function 
+as arguments. For example: 
+
+.. code:: scm
+
+  ; define a function that prints its argument
+  (define (my-post x) (post "in my-post, x is:" x))
+  s4m> my-post
+
+  ; my-post gets passed the value returned by evaluating (+ 1 2)
+  (my-post (+ 1 2))
+  s4m: in my-post, x is: 3
+  s4m> ()
+
+If we use **quote**, we tell the interpreter not to evaluate the expression and 
+use the result as x, but rather to pass the expression *itself*, as code, in as a 
+argument:
+
+.. code:: scm
+
+  (my-post (quote (+ 1 2)))
+  s4m: in my-post, x is: (+ 1 2)
+  s4m> ()
+
+This is used so frequently in Lisps that is has a special shortcut syntax, the 
+single quote character:
+
+.. code:: scm
+
+  (my-post '(+ 1 2) )
+  s4m: in my-post, x is: (+ 1 2)
+  s4m> ()
+
+When we use the single-quote, it indicates that the rest of the immediately
+following s-expression should be used as it is *written in code*, not as it would *evaluate*.
+If we use it in front of a parenthetical expression, it thus returns a list, instead of
+calling a function:
+
+.. code:: scm
+
+  ; this returns the result of calling + with the args 1 and 2
+  (+ 1 2)
+  s4m> 3
+
+  ; whereas this returns a list, the first element of which is +
+  '(+ 1 2)
+  s4m> (+ 1 2)
+  
+
+This means quote is also a shortcut for making lists:
+
+.. code:: scm
+
+  (define l '(+ 1 2 3))
+  s4m> (+ 1 2 3)
+
+  l
+  s4m> (+ 1 2 3)
+
+  ; now call that list as a function
+  (eval l)
+  s4m> 6
+ 
+We can also use quote in front of a symbol to indicate that we
+want the *symbol*, not the value at which the symbol
+points. This will work even if the symbol has not been used
+to define a variable.
+
+.. code:: scm
+
+  ; make a list of symbols a b c
+  (list 'a 'b 'c)
+  s4m> (a b c)
+
+  ; which is precisely equivalent to quoting the whole expression
+  '(list a b c)
+  s4m> (a b c)
+
+  ; we could evaluate this, which will work if a b c are defined 
+  ; and a is function, but be an error if they are undefined
+  (eval '(a b c))
+  s4m> Error: unbound variable a in (a b c)
+
+  ; an example that works
+  (define foo 99)
+  (eval '(post foo))
+  s4m: 99
+  s4m> ()
+
+
+Quote and eval are opposites, so we can nest them as much as we want:
+  
+.. code:: scm
+
+
+  (eval '(post "hello world"))
+  s4m> hello world
+
+  (eval (quote (eval '(post "hello world"))))
+  s4m> hello world 
+ 
+
+NEXT: symbols in Max, why it matters
+    
+ 
+Keywords
+--------
+
+Some Lisp dialects, including s7, have **keywords**. A keyword is a symbol that
+starts with a colon and *always evaluates to itself*. A keyword can not be bound
+to anything other than itself - it can't be the name of a variable or function. 
+In this way, it acts like a simple type, such as
+a string or number.  This also means a variable can hold a keyword, but a keyword can't be a variable.
+
+When we get to hash-tables and dictionaries, you'll see that keywords are commonly
+used as keys. Conveniently, Max will let us use them in many places as well, including
+table and dict names.
+
+.. code:: scm
+  
+  ; evaluating a keyword has no change
+  ; much like evaluating a simple type
+  :my-keyword
+  s4m> :my-keyword
+
+  (define var-holding-a-keyword :my-keyword)
+  s4m> :my-keyword
+
+  (eval var-holding-a-keyword)
+  s4m> :my-keyword
+
+  ; but no using them as variable names!
+  (define :my-keyword 99)
+  s4m> Error: keywords are constants 
+
+We will use quoting and evaluation a lot in Max, so keywords are very helpful. We can see
+at a glance that a symbol starting with a colon is a keyword, no matter the context. 
+It doesn't matter if we're not sure whether it will get evaluated, because evaluation
+won't change anything.
+
+Lists, in more depth
+--------------------
+
+As we previously discussed, under the hood, Lips lists are *linked-lists*.
+In the computer's memory, every cell in a list includes
+a value, and a pointer to the next item. The last item in a list has a pointer
+to a hidden cell that holds the **null list**. So if we look at a list of three
+elements, **'(1 2 3)**, there are three cells with numbers and pointers, and
+one hidden cell with the null list. The third cell's pointer points there. Or
+another way of thinking of it is that there are three cells, the last of which
+points to the null list, which is magical and gets special rules. 
+
+Ok, I admit, Lisp list functions are weird, with names like **car**, **cdr**, and **cons**.
+While these names seem annoying at first, they have stuck around
+as they are easy to type, and will become second nature pretty quickly.
+They come from operating instruction names on very old IBM computers.
+
+We can get the first item of a list using the **car** function.
+We can get the *rest* of the list, by using the **cdr** function, which
+always returns a list. (Well, not *always-always*, but for now let's say always:
+if used on a *proper-list*, cdr always returns a list). cdr returns a list
+because if we start at item 2 in our liked list, having chopped off item 1 (the head), 
+the chain of links will still work to the end of the list. An example is worth
+a thousand words here:
+
+.. code:: scm
+  
+  ; a list
+  (define l (list 1 2 3))
+  s4m> (1 2 3)
+
+  ; get the car of l
+  (car l)
+  s4m> 1
+
+  ; get the cdr of l, it's always a list
+  (cdr l)
+  s4m> (2 3)
+
+Because cdr returns a list, we can get the cdr of a cdr - this
+is like chopping off the head twice - and we still get a list: 
+
+.. code:: scm
+  
+  ; get the cdr of cdr of l
+  (cdr (cdr l))
+  s4m> (3)
+
+  ; note the above is a *list* with 3, not 3 itself!
+  
+  ; the very last cdr is the null list
+  (cdr (cdr (cdr l)))
+  s4m> ()
+
+  ; which can be checked with the null? predicate
+  (null? (cdr (cdr (cdr l))))
+  s4m> #t
+
+So remember, a proper list is a set of value/pointer entries, where
+the last one points to the null list. The value-pointer pairs
+have a special name, they are called **cons cells**.
+
+In addition to making lists with the list function, we can use the **cons** function.
+The list function does the magic for us, while **cons** involves us in the
+underlying linked-list. We use cons to add a new cons cell
+to the *head* of a list.
+
+.. code:: scm
+ 
+  ; extend our list at the front 
+  (cons 0 (list 1 2 3))
+  s4m> (0 1 2 3)
+
+To make a list from scratch with cons, we would work backwards, starting
+with the null list. And we make the null list by quoting the printed representation
+of an empty list, **'()**.
+
+.. code:: scm
+
+  (null? '())
+  s4m> #t
+
+  ; make a list by cons'ing to the null list
+  (cons 3 '())
+  s4m> (3)
+
+  ; make a list, in a cumbersome way
+  (cons 1 (cons 2 (cons 3 '())))
+  s4m> (1 2 3)
+
+If we want to add to the end of a list, we need to use the **append** function,
+which takes multiple lists as arguments and joins them. This means that, unlike
+cons, the item to be added needs to be a list:
+
+.. code:: scm
+
+  ; join two lists
+  (append (list 1 2 3) (list 4 5 6))
+  s4m> (1 2 3 4 5 6)
+
+  ; add one item to a list
+  (define l (list 1 2 3)
+  s4m> (1 2 3)
+
+  (append l (list 4))
+  s4m> (1 2 3 4)
+
+  ; or with quote
+  (append l '(5))
+  s4m> (1 2 3 4 5)
+
+Append can have as many arguments as you want
+
+.. code:: scm
+
+  (append (list 1 2) (list 3 4) (list 5 6))
+  s4m> (1 2 3 4 5 6)
+
+.. LEFT OFF
+
+
+Note that if you call append with a final element that is *not* a list,
+you won't get an error.. but you also won't get a proper list. This is
+because the final item is a simple value and not a value/pointer pair.
+
+.. code:: scm
+
+  (append (list 1 2) 3)
+  s4m> (1 2 . 4)
+
+The dot before 4 indicates that the list stopped being a proper list
+at the third item. Improper lists are used in various places, but typically
+only as pairs, also called *dotted pairs*. We get them when we use cons, *without* ending our chain
+with the null list:
+
+.. code:: scm
+
+  ; consing to an atomic value produces a dotted pair
+  (define my-pair (cons 1 2))
+  s4m> (1 . 2) 
+
+Under the hood, a dotted pair consists of two cells: the first
+has a value and a pointer to the next cell, and the second has only a value.
+This means we can use car and cdr, but there is no cdr of the second element.
+
+.. code:: scm
+
+  ; consing to an atomic value produces a dotted pair
+  (define my-pair (cons 1 2))
+  s4m> (1 . 2) 
+
+  (car my-pair)
+  s4m> 1
+
+  (cdr my-pair)
+  s4m> 2
+
+  (cdr (cdr my-pair))
+  s4m> Error: cdr argument 2 is an integer, but should be a pair.
+
+.. TODO the cons and cdr shortcuts
+
+.. TODO some sort of conclusion on lists, yo
+
+.. TODO vectors 
+
 
 Hash-Tables
 ^^^^^^^^^^^
