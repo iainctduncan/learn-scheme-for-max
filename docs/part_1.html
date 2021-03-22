@@ -1,0 +1,1879 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Part 1 - Scheme Basics &#8212; Learn Scheme For Max and S74 Scheme 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Getting Started" href="getting_started.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="part-1-scheme-basics">
+<h1>Part 1 - Scheme Basics<a class="headerlink" href="#part-1-scheme-basics" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="basic-syntax">
+<h2>Basic syntax<a class="headerlink" href="#basic-syntax" title="Permalink to this headline">¶</a></h2>
+<p>Scheme syntax is very simple: everything in the language is done with <strong>s-expressions</strong>.
+(<strong>sexp’s</strong> for short.) A simple s-expression is either one <strong>atom</strong> (such as a symbol, number, string),
+or a series of atoms surrounded by parentheses. S-expressions can be nested to any depth
+we want.</p>
+<p>When we send an sexp to the interpreter to be <strong>evaluated</strong>, the interpreter evaluates
+all nested expressions, from the inside out, ending with evaluation of the outer sexpr.
+Evaluation of a parenthetical s-expr is done by calling the first atom as a function,
+with the remaining atoms passed as <strong>parameters</strong>, also called <strong>arguments</strong>. (In strict computer science
+circles, there are differences between the terms “procedure” and “function”, and between
+“parameter” and “argument”, but we are <em>not</em> going to worry about those here, you can take
+them as synonyms for now.)</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; evaluating an sexp that calls the function bound to the symbol &#39;+&#39;</span>
+<span class="c1">; evaluating this sexp calls the function with arguments and returns value 2</span>
+<span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">2</span>
+
+<span class="c1">; post is a function, and we can pass nested sexprs to it</span>
+<span class="c1">; post returns null, but prints as side effect</span>
+<span class="p">(</span><span class="nf">post</span> <span class="s">&quot;1 + 1 is:&quot;</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">1</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="mi">1</span> <span class="nv">+</span> <span class="mi">1</span> <span class="nv">is:</span> <span class="mi">2</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>This syntax is called <strong>prefix notation</strong> - functions are in the first
+slot, followed by as many arguments as the function will permit.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; add more numbers!</span>
+<span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>Nesting is simple - just add more sexps. They are evaluated from the inside out.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; a compound expression</span>
+<span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="p">(</span><span class="nb">* </span><span class="mi">2</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">3</span> <span class="mi">4</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">15</span>
+</pre></div>
+</div>
+<p>In the above, three sexps get evaluated. First, <strong>(+ 3 4)</strong> evaluates to
+7 by calling the + function with arguments 3 and 4, resulting in
+<strong>(+ 1 (* 2 7)))</strong>. Next, <strong>(* 2 7)</strong> is evaluated by calling the * function with
+arguments 2 and 7, leaving <strong>(+ 1 14)</strong>. Finally, the remaining sexp is evaluated
+by calling the + function with arguments 1 and 14. Each round of evaluation
+calls a function, replacing the sexp with the results.</p>
+<p>This is critical to understand. Evaluation of an sexp calls the function
+(or special form) in the first slot, with the arguments from the rest of the sexp, and nested sexps are
+evaluated inside-out.</p>
+</div>
+<div class="section" id="variables">
+<h2>Variables<a class="headerlink" href="#variables" title="Permalink to this headline">¶</a></h2>
+<p>The <strong>define</strong> function creates a variable by binding a value to a <strong>symbol</strong>
+in the currently executing scope. If we run define at the top level of our program,
+this will be the <strong>global scope</strong> and this binding will be visible everywhere in our
+program. (Unless it is shadowed by another binding of the same symbol, which we will
+get to later…)</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; define a variable by binding the symbol &#39;a&#39; to the value 99</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>This function has a <strong>side-effect</strong>, meaning it does something other than
+just return a value. Its side effect is binding the variable. In s7 (but not all Schemes),
+define also <em>returns</em> the value that was bound.
+Which means we could, if we really wanted, do something like this:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; both b and a will be bound to 99</span>
+<span class="c1">; not recommended, here for illustration only!</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">b</span> <span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">99</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>Evaluation does not always mean calling a function. If we evaluate a form
+that is <em>not</em> a function call, we get something back, with what that something
+is depending on the form. Evaluating a basic type returns the value itself
+(no change) and evaluating a variable returns the value bound in the variable.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; evaluating a simple type like a number returns the value</span>
+<span class="mi">99</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">foo</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="c1">; evaluating a variable returns the value bound to the variable</span>
+<span class="nv">foo</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>Once a variable has been created, we can assign a new value to it with the <strong>set!</strong> function.
+It’s a common Scheme convention to name functions with side-effects with a trailing exclamation mark.
+In s7, set! also returns the value set. We can only set a variable that has already
+been defined. In s7 (but not all Schemes), we can also set a new value on an existing variable by just
+redefining.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="nv">a</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="p">(</span><span class="k">set! </span><span class="nv">a</span> <span class="mi">100</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
+
+<span class="nv">a</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">101</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">101</span>
+
+<span class="nv">a</span>
+<span class="nv">s4m&gt;</span> <span class="mi">101</span>
+
+<span class="p">(</span><span class="k">set! </span><span class="nv">z</span> <span class="mi">999</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">ERROR</span> <span class="nv">unbound</span> <span class="nv">variable</span> <span class="nv">z</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<p>Functions are defined using the special form <strong>lambda</strong>. Evaluating a lambda
+form will return an anonymous function, which we can in turn bind to a variable.</p>
+<p>The lambda form takes two <strong>clauses</strong>: a parameter list and a body. The parameter
+list specifies the local bindings that will be active in the body of the function,
+based on the arguments passed in. The body gets evaluated when we call the function,
+with whatever arguments are passed in at call time substituted for the parameters.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a lambda expression that takes an argument, x, and returns x + 1</span>
+<span class="c1">; it returns a lambda procedure</span>
+<span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="nv">&lt;lambda</span> <span class="p">(</span><span class="nf">x</span><span class="p">)</span><span class="nv">&gt;</span>
+
+<span class="c1">; the same, but binding the function to the symbol my-fun</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-fun</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-fun</span>
+
+<span class="c1">; now call the function</span>
+<span class="p">(</span><span class="nf">my-fun</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+
+<span class="c1">; this means we could just nest the lambda form in order to call it</span>
+<span class="c1">; but this is not very readable, so less commonly done</span>
+<span class="p">((</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">4</span>
+
+<span class="c1">; a lambda form specifying a procedure with two parameters</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-adder</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">a</span> <span class="nv">b</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-adder</span>
+
+<span class="p">(</span><span class="nf">my-adder</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">7</span>
+</pre></div>
+</div>
+<p>There is a shortcut in Scheme, (sometimes called “defun” notation, from Common Lisp), that allows
+us to define functions without explictly using lambda. Under the hood,
+it’s exactly the same.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; define a function called add-1, that adds 1 to its argument</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">add-1</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">add-1</span>
+
+<span class="c1">; this is no different from the below</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">add-1</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">)))</span>
+
+<span class="c1">; in S7 we could do this, because define returns the value bound</span>
+<span class="c1">; again, not recommended, but a useful illustration</span>
+<span class="p">((</span><span class="k">define </span><span class="p">(</span><span class="nf">add-1</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+</pre></div>
+</div>
+<p>Some texts only use the lambda form as it is more explicit, and thus clear what is going on. We
+will use both as space can be at a premium in a Max patch!</p>
+</div>
+<div class="section" id="output-in-scheme-for-max">
+<h2>Output in Scheme For Max<a class="headerlink" href="#output-in-scheme-for-max" title="Permalink to this headline">¶</a></h2>
+<p>In Scheme for Max, we have two functions we will use all the time for output, <strong>out</strong> and <strong>post</strong>.
+<strong>out</strong> is used to send values out the s4m object’s outlets. It takes two arguments, the
+outlet number, and the value to be sent out. In Scheme For Max, we call the first outlet “outlet 0”.</p>
+<p><strong>out</strong> is an example of a function that is called purely for its side-effect - output a number.
+We send output out a lot, so we don’t necessarily want to see every value sent out showing up in the
+Max console. For this reason, out returns <strong>null</strong>. This way, if our Scheme for Max object’s <strong>log-null</strong>
+attribute is false (the default), we will not see any console activity on a call to <strong>out</strong>.</p>
+<p>In Scheme, <strong>null</strong> is technically the <strong>null list</strong>, and it’s printed representation is <strong>()</strong>.
+We will explain why later on. For now, just know this is null, and it means “empty value”.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; send the number 99 out the first outlet</span>
+<span class="c1">; this function also returns the null list</span>
+<span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">)</span>
+
+<span class="c1">; pretend we set @log-null to 1</span>
+<span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>From now on, the tutorial will not always show the returned null value, such as after
+calls to post, as it does clutter up examples.</p>
+<p>If we want so send out multiple values, so that the output is a Max list message,
+we use the <strong>list</strong> function:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; send the list 1 2 3 out the first outlet</span>
+<span class="c1">; the list function returns a list</span>
+<span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The <strong>post</strong> function logs to the Max console. It accepts any number of arguments,
+automatically converting them to string representations and putting spaces between them. It is
+also being called for its side effect and so returns null. You’ll see that the prompt
+from post printed output is <strong>s4m:</strong> instead of the repl return prompt of <strong>s4m&gt;</strong></p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; post to console, with log-nulls set to true</span>
+<span class="p">(</span><span class="nf">post</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+
+<span class="c1">; post a variable</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="p">(</span><span class="nf">post</span> <span class="s">&quot;a is&quot;</span> <span class="nv">a</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">a</span> <span class="nv">is</span> <span class="mi">99</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>During development, it can be helpful to attach a <strong>print s4m-out:</strong> object to your outlet, giving you
+all the output in your Max console while you work.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; shows return value (if @log-nulls is 1) and the printed output from our print object</span>
+<span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="nv">:foobar</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+<span class="nv">s4m-out:</span> <span class="nv">:foobar</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="basic-types">
+<h2>Basic types<a class="headerlink" href="#basic-types" title="Permalink to this headline">¶</a></h2>
+<p>Scheme is dynamically typed, meaning that we do not have to specify in advance of what type
+a variable will be, but variables do have types.</p>
+<div class="section" id="booleans-and-predicates">
+<h3>Booleans and Predicates<a class="headerlink" href="#booleans-and-predicates" title="Permalink to this headline">¶</a></h3>
+<p>In Scheme, we use <strong>#true</strong> and <strong>#false</strong> for boolean values, which can also be written as
+<strong>#t</strong> and <strong>#f</strong>.  A predicate function is a function that checks the value of an expression
+against some criterion and returns a boolean.
+In Scheme, predicate functions normally have names ending in a question mark.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a boolean variable</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-boolean</span> <span class="no">#t</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; check if it is a boolean</span>
+<span class="p">(</span><span class="nb">boolean? </span><span class="nv">my-boolean</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+</pre></div>
+</div>
+<p>Some other useful predicates:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; check if a variable is a function/procedure with procedure?</span>
+<span class="p">(</span><span class="nb">procedure? </span><span class="nv">post</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; the defined? predicate checks if a symbol is a defined variable</span>
+<span class="p">(</span><span class="nf">defined?</span> <span class="nv">foo</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">foo</span> <span class="mi">1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="p">(</span><span class="nf">defined?</span> <span class="nv">foo</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+</pre></div>
+</div>
+<p>We can check whether something is null with the <strong>null?</strong> predicate.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; the out function returns null, so...</span>
+<span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+</pre></div>
+</div>
+<p>As an aside, remember that null is actually <em>the null list</em>, meaning
+that using the <strong>list?</strong> predicate on the return value will also be true:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; the out function returns null, and null is the null list, so...</span>
+<span class="p">(</span><span class="nb">list? </span><span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; just for fun...</span>
+<span class="p">(</span><span class="nb">boolean? </span><span class="p">(</span><span class="nb">list? </span><span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="numerical-types">
+<h3>Numerical Types<a class="headerlink" href="#numerical-types" title="Permalink to this headline">¶</a></h3>
+<p>Like most programming languages, Scheme supports integers and floats, but in Scheme, both are sub-types
+of the <strong>number</strong> type. In Scheme, floats are <strong>inexact numbers</strong>, while integers are <strong>exact numbers</strong>.
+Unlike many other languages, Schemes also support fractions as a type, which is very
+helpful in music.
+There are number of predicate functions and conversion functions for working with numeric types,
+and there are some rules for automatic conversion you will want to know. The examples below provide enough to
+work with in Max, and for further details you can consult various online resources.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make an integer</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="p">(</span><span class="nb">integer? </span><span class="nv">x</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">y</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mf">2.0</span>
+
+<span class="c1">; y is not an integer</span>
+<span class="p">(</span><span class="nb">integer? </span><span class="nv">y</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
+
+<span class="c1">; y is an inexact number</span>
+<span class="p">(</span><span class="nb">inexact? </span><span class="nv">y</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; but both x and y are numbers, and real numbers</span>
+<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">number? </span><span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">number? </span><span class="nv">y</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">real? </span><span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">real? </span><span class="nv">y</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; mixing inexacts and exacts creates other inexacts</span>
+<span class="p">(</span><span class="nb">/ </span><span class="mi">1</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mf">2.0</span>
+
+<span class="c1">; integer math creates fractions</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">z</span> <span class="p">(</span><span class="nb">/ </span><span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span><span class="nv">/4</span>
+
+<span class="c1">; these are still exact</span>
+<span class="p">(</span><span class="nb">exact? </span><span class="nv">z</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; which we can later cast to inexact</span>
+<span class="p">(</span><span class="nb">exact-&gt;inexact </span><span class="p">(</span><span class="nb">/ </span><span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mf">0.75</span>
+
+<span class="c1">; exacts stay exact until mixed with inexact</span>
+<span class="p">(</span><span class="nb">* </span><span class="mf">1.0</span> <span class="p">(</span><span class="nb">/ </span><span class="mi">3</span> <span class="mi">4</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mf">0.75</span>
+</pre></div>
+</div>
+<p>Because of the support for fractions, we can stay exact through a chain of operations,
+only converting at the end, a vastly preferable situation for converting
+tuning or timing fractions compared to languages like JavaScript or C. This
+does mean that we need to be more explicit in coversions however, and so
+there are some helpers in the form of <strong>floor</strong>, <strong>ceiling</strong>, and <strong>round</strong>.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">floor </span><span class="mf">1.1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mf">1.0</span>
+
+<span class="p">(</span><span class="nb">ceiling </span><span class="mf">1.1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mf">2.0</span>
+
+<span class="p">(</span><span class="nb">round </span><span class="mf">1.5</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mf">1.0</span>
+
+<span class="p">(</span><span class="nb">round </span><span class="mf">1.51</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mf">2.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="symbols">
+<h3>Symbols<a class="headerlink" href="#symbols" title="Permalink to this headline">¶</a></h3>
+<p>Symbols are identifiers in Scheme that can be used as the name for
+functions and variables. They can hold more characters than in most
+languages, because Lisps only use whitespace and parentheses for syntax.
+In Scheme, it’s common to include hyphens, exclamation marks, and
+questions marks in names.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; symbols for predicates usually end in question marks</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">is-one?</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="nv">x</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>Evaluating a symbol returns the value stored at that symbol:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">answer</span> <span class="mi">42</span><span class="p">)</span>
+<span class="nv">sm4&gt;</span> <span class="mi">42</span>
+
+<span class="nv">answer</span>
+<span class="nv">s4m&gt;</span> <span class="mi">42</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="strings-and-characters">
+<h3>Strings and characters<a class="headerlink" href="#strings-and-characters" title="Permalink to this headline">¶</a></h3>
+<p>Scheme also has a string type and a character type. Now strictly speaking, Max doesn’t really
+do strings - to Max they are just symbols with quotation marks.
+So we won’t discuss either of these in much detail, especially
+characters. A good rule of thumb in Max is to avoid strings unless you <em>need</em>
+a string. In Scheme, Strings use double quotes.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">foo</span> <span class="s">&quot;foo&quot;</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="s">&quot;foo&quot;</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">bar</span> <span class="s">&quot;bar&quot;</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="s">&quot;bar&quot;</span>
+
+<span class="c1">; join strings with string-append</span>
+<span class="p">(</span><span class="nb">string-append </span><span class="nv">foo</span> <span class="nv">bar</span><span class="p">)</span>
+<span class="s">&quot;foobar&quot;</span>
+</pre></div>
+</div>
+<p>s7 includes a variety of string conversion routines, which one can look
+up in the online Scheme references (Dybvig is my recommendation).
+Some of the more useful ones are:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">number-&gt;string </span><span class="mi">1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="s">&quot;1&quot;</span>
+
+<span class="p">(</span><span class="nb">string-&gt;number </span><span class="s">&quot;1&quot;</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="c1">; note that string-&gt;number and number to string are smart about floats</span>
+<span class="p">(</span><span class="nb">string-&gt;number </span><span class="s">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mf">1.0</span>
+
+<span class="c1">; and even fractions!</span>
+<span class="p">(</span><span class="nb">string-&gt;number </span><span class="s">&quot;3/4&quot;</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span><span class="nv">/4</span>
+
+<span class="c1">; of course, there&#39;s a predicate...</span>
+<span class="p">(</span><span class="nb">string? </span><span class="p">(</span><span class="nb">number-&gt;string </span><span class="mi">1</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+</pre></div>
+</div>
+<p>We can also go back and forth between symbols and strings.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a symbol from a string</span>
+<span class="p">(</span><span class="nf">symbol</span> <span class="s">&quot;foo&quot;</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">foo</span>
+
+<span class="c1">; and its predicate</span>
+<span class="p">(</span><span class="nb">symbol? </span><span class="p">(</span><span class="nf">symbol</span> <span class="s">&quot;foo&quot;</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; round and around</span>
+<span class="p">(</span><span class="nb">string? </span><span class="p">(</span><span class="nb">symbol-&gt;string </span><span class="p">(</span><span class="nf">symbol</span> <span class="s">&quot;foo&quot;</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+</pre></div>
+</div>
+<p>There are also functions for extracting characters from strings and building
+up strings, but I don’t find myself using these much in Max, so we’ll leave
+this to the reader to explore online. That’s all we’ll say about strings in
+this crash course.</p>
+</div>
+</div>
+<div class="section" id="lists-an-introduction">
+<h2>Lists - an introduction<a class="headerlink" href="#lists-an-introduction" title="Permalink to this headline">¶</a></h2>
+<p>Lists are the most important compound data type in Lisps, including Scheme.
+So much so that Lisp originally stood for “List Processing”! We’ll be
+looking at lists in detail later, but right now we have a bit of a
+chicken-and-egg situation: we need to know at least a little bit about them for the
+next section to make sense.</p>
+<p>We make a list using the <strong>list</strong> function:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a list</span>
+<span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; store a list in a variable</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">l</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can retrieve individual members of a list by index using <strong>list-ref</strong>,
+and we can set them using <strong>list-set!</strong>:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get value of l at index 0</span>
+<span class="p">(</span><span class="nb">list-ref </span><span class="nv">l</span> <span class="mi">0</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="c1">; set value of l at index 0</span>
+<span class="p">(</span><span class="nf">list-set!</span> <span class="nv">l</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="c1">; eval the variable, and we get the (updated) list</span>
+<span class="nv">l</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In s7, we can also use what is called <em>applicative-syntax</em>, where
+we use a list in the function slot of a paranthetical expression,
+and put the index in the argument slot. Note that the syntax
+for set is a bit unusual, we use the syntax for getting an item
+to refer to a location, and the location is the argument to <strong>set!</strong>.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get value of l at index 0, applicatively</span>
+<span class="p">(</span><span class="nf">l</span> <span class="mi">0</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="c1">; set using applicative syntax</span>
+<span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">l</span> <span class="mi">0</span><span class="p">)</span> <span class="mi">100</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
+
+<span class="nv">l</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">100</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Lists look at first like an array in other languages, but under the hood, lists
+in Lisp are actually implemented as <em>linked lists</em>. There is a whole family
+of functions for working with lists as linked-lists, and we’ll get to
+those soon.</p>
+<p>The astute reader will have noticed that the <em>printed representation</em>
+we get back when evaluating a variable that holds a list (or a call
+to the list function), looks an awful lot like an s-expression. In
+the above example, it looks just like a call to a function called “100”.
+Hold that thought, it’s going to become very important!</p>
+</div>
+<div class="section" id="evaluation-and-quoting">
+<h2>Evaluation and quoting<a class="headerlink" href="#evaluation-and-quoting" title="Permalink to this headline">¶</a></h2>
+<p>At this point, we are able to make variables and functions, and we know about
+basic types and lists. It’s time for our first look at what make the Lisp family
+of languages unusual.</p>
+<p>When we send an s-expression or atom to the interpreter to run, we
+are asking the interpreter to <em>evaluate</em> the expression. We can
+also do this explicitly using the <strong>eval</strong> function.  In the case
+of a basic number or string, evaluation doesn’t change anything - it
+returns the same value:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; send a number to the interpreter, and we get the same thing back</span>
+<span class="mi">99</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="c1">; as evaluating doesn&#39;t change it, the eval function won&#39;t either</span>
+<span class="p">(</span><span class="nb">eval </span><span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span><span class="p">)</span>
+
+<span class="c1">; thus nesting evals of a number doesn&#39;t either</span>
+<span class="p">(</span><span class="nb">eval </span><span class="p">(</span><span class="nb">eval </span><span class="mi">99</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="c1">; strings also evaluate to themselves</span>
+<span class="p">(</span><span class="nb">eval </span><span class="s">&quot;foobar&quot;</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="s">&quot;foobar&quot;</span>
+</pre></div>
+</div>
+<p>However, when we evaluate a <strong>symbol</strong>, the evaluation process returns that which
+the symbol <em>points to</em>. Which of course requires that either this symbol is
+either <em>bound</em> in the language, or that we have by bound it ourselves by
+defining using the symbol.
+The value pointed to could be an atomic data item, in the case of a variable,
+or a function, in the case of a function name:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">my-var</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="nv">my-var</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="p">(</span><span class="nb">eval </span><span class="nv">my-var</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">add-1</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">add-1</span>
+
+<span class="c1">; evaluating the symbol that points to the function returns the function</span>
+<span class="nv">add-1</span>
+<span class="nv">s4m&gt;</span> <span class="nv">add-1</span>
+
+<span class="p">(</span><span class="nb">eval </span><span class="nv">add-1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">add-1</span>
+</pre></div>
+</div>
+<p>But what if we evaluate a list? Hang on to your hats!</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; evaluate a list</span>
+<span class="p">(</span><span class="nb">eval </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error</span><span class="c1">; attempt to apply an integer 1 to (2 3) in (1 2 3)?</span>
+</pre></div>
+</div>
+<p>We get an error message about “applying an integer”, giving us a clue
+what’s going on. Let’s try that again, but instead of the just using the list function,
+we will add the use of the symbol function, which we recall creates a symbol from a string:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make the symbol post, from a string</span>
+<span class="p">(</span><span class="nf">symbol</span> <span class="s">&quot;post&quot;</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">post</span>
+
+<span class="c1">; make a list, starting with the symbol</span>
+<span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">symbol</span> <span class="s">&quot;post&quot;</span><span class="p">)</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">post</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; evaluate this list, and we see we have called the post function</span>
+<span class="p">(</span><span class="nb">eval </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nf">symbol</span> <span class="s">&quot;post&quot;</span><span class="p">)</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+
+<span class="c1">; or more concisely ...</span>
+<span class="p">(</span><span class="nb">eval </span><span class="p">(</span><span class="nb">list </span><span class="nv">post</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>Now we can see what is going on. Evaluating a list <strong>is</strong> the same as calling
+a function. Literally the same. The first element of the list is taken as indicating
+a function, and the rest are its arguments. Scheme syntax consists of lists.
+We can build them with functions or special forms, and we can call them as functions
+with eval.</p>
+<p>Eval has a counterpart that does the opposite: <strong>quote</strong>. When we use
+quote, we tell the interpreter <em>to skip</em> evaluation of something that it would otherwise
+evaluate. In a normal function call, expressions used as arguments are evaluated
+<em>prior</em> to the function call, and the values returned are passed to the function
+as arguments. For example:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; define a function that prints its argument</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-post</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;in my-post, x is:&quot;</span> <span class="nv">x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-post</span>
+
+<span class="c1">; my-post gets passed the value returned by evaluating (+ 1 2)</span>
+<span class="p">(</span><span class="nf">my-post</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="nv">in</span> <span class="nv">my-post,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">3</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>If we use <strong>quote</strong>, we tell the interpreter not to evaluate the expression and
+use the result as x, but rather to pass the expression <em>itself</em>, as code, in as a
+argument:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nf">my-post</span> <span class="p">(</span><span class="k">quote </span><span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)))</span>
+<span class="nv">s4m:</span> <span class="nv">in</span> <span class="nv">my-post,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>This is used so frequently in Lisps that is has a special shortcut syntax, the
+single quote character:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nf">my-post</span> <span class="o">&#39;</span><span class="p">(</span><span class="nv">+</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">in</span> <span class="nv">my-post,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>When we use the single-quote, it indicates that the rest of the immediately
+following s-expression should be used as it is <em>written in code</em>, not as it would <em>evaluate</em>.
+If we use it in front of a parenthetical expression, it thus returns a list, instead of
+calling a function:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; this returns the result of calling + with the args 1 and 2</span>
+<span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+
+<span class="c1">; whereas this returns a list, the first element of which is +</span>
+<span class="o">&#39;</span><span class="p">(</span><span class="nv">+</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This means quote is also a shortcut for making lists:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">l</span> <span class="o">&#39;</span><span class="p">(</span><span class="nv">+</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="nv">l</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; now call that list as a function</span>
+<span class="p">(</span><span class="nb">eval </span><span class="nv">l</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">6</span>
+</pre></div>
+</div>
+<p>We can also use quote in front of a symbol to indicate that we
+want the <em>symbol</em>, not the value at which the symbol
+points. This will work even if the symbol has not been used
+to define a variable.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a list of symbols a b c</span>
+<span class="p">(</span><span class="nb">list </span><span class="ss">&#39;a</span> <span class="ss">&#39;b</span> <span class="ss">&#39;c</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">a</span> <span class="nv">b</span> <span class="nv">c</span><span class="p">)</span>
+
+<span class="c1">; which is precisely equivalent to quoting the whole expression</span>
+<span class="o">&#39;</span><span class="p">(</span><span class="nv">list</span> <span class="nv">a</span> <span class="nv">b</span> <span class="nv">c</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">a</span> <span class="nv">b</span> <span class="nv">c</span><span class="p">)</span>
+
+<span class="c1">; we could evaluate this, which will work if a b c are defined</span>
+<span class="c1">; and a is function, but be an error if they are undefined</span>
+<span class="p">(</span><span class="nb">eval </span><span class="o">&#39;</span><span class="p">(</span><span class="nv">a</span> <span class="nv">b</span> <span class="nv">c</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error:</span> <span class="nv">unbound</span> <span class="nv">variable</span> <span class="nv">a</span> <span class="nv">in</span> <span class="p">(</span><span class="nf">a</span> <span class="nv">b</span> <span class="nv">c</span><span class="p">)</span>
+
+<span class="c1">; an example that works</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">foo</span> <span class="mi">99</span><span class="p">)</span>
+<span class="p">(</span><span class="nb">eval </span><span class="o">&#39;</span><span class="p">(</span><span class="nv">post</span> <span class="nv">foo</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="mi">99</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>Quote and eval are opposites, so we can nest them as much as we want:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">eval </span><span class="o">&#39;</span><span class="p">(</span><span class="nv">post</span> <span class="s">&quot;hello world&quot;</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">hello</span> <span class="nv">world</span>
+
+<span class="p">(</span><span class="nb">eval </span><span class="p">(</span><span class="k">quote </span><span class="p">(</span><span class="nb">eval </span><span class="o">&#39;</span><span class="p">(</span><span class="nv">post</span> <span class="s">&quot;hello world&quot;</span><span class="p">))))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">hello</span> <span class="nv">world</span>
+</pre></div>
+</div>
+<p>NEXT: symbols in Max, why it matters</p>
+</div>
+<div class="section" id="keywords">
+<h2>Keywords<a class="headerlink" href="#keywords" title="Permalink to this headline">¶</a></h2>
+<p>Some Lisp dialects, including s7, have <strong>keywords</strong>. A keyword is a symbol that
+starts with a colon and <em>always evaluates to itself</em>. A keyword can not be bound
+to anything other than itself - it can’t be the name of a variable or function.
+In this way, it acts like a simple type, such as
+a string or number.  This also means a variable can hold a keyword, but a keyword can’t be a variable.</p>
+<p>When we get to hash-tables and dictionaries, you’ll see that keywords are commonly
+used as keys. Conveniently, Max will let us use them in many places as well, including
+table and dict names.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; evaluating a keyword has no change</span>
+<span class="c1">; much like evaluating a simple type</span>
+<span class="nv">:my-keyword</span>
+<span class="nv">s4m&gt;</span> <span class="nv">:my-keyword</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">var-holding-a-keyword</span> <span class="nv">:my-keyword</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">:my-keyword</span>
+
+<span class="p">(</span><span class="nb">eval </span><span class="nv">var-holding-a-keyword</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">:my-keyword</span>
+
+<span class="c1">; but no using them as variable names!</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">:my-keyword</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error:</span> <span class="nv">keywords</span> <span class="nv">are</span> <span class="nv">constants</span>
+</pre></div>
+</div>
+<p>We will use quoting and evaluation a lot in Max, so keywords are very helpful. We can see
+at a glance that a symbol starting with a colon is a keyword, no matter the context.
+It doesn’t matter if we’re not sure whether it will get evaluated, because evaluation
+won’t change anything.</p>
+</div>
+<div class="section" id="lists-in-more-depth">
+<h2>Lists, in more depth<a class="headerlink" href="#lists-in-more-depth" title="Permalink to this headline">¶</a></h2>
+<p>As we previously discussed, under the hood, Lips lists are <em>linked-lists</em>.
+In the computer memory, every cell in a list includes
+a value, and a pointer to the next item. The last item in a list has a pointer
+to a hidden cell that holds the <strong>null list</strong>. So if we look at a list of three
+elements, <strong>‘(1 2 3)</strong>, there are three cells with numbers and pointers, and
+one hidden cell with the null list, to which the third cell’s pointer points. Or
+another way of thinking of it is that there are three cells, the last of which
+points to the null list, which is a special case.</p>
+<p>In this section we will look briefly at the classical Lisp list functions.
+I will admit these Lisp list functions have bizarre names: <strong>car</strong>, <strong>cdr</strong>, <strong>cons</strong>, etc.
+While these names seem annoying at first, they have stuck around
+as they are easy to type, and will become second nature pretty quickly.
+(They originally come from operating instruction names on very old IBM computers!)</p>
+<p>We can get the first item of a list using the <strong>car</strong> function, and
+we can get the <em>rest</em> of the list, by using the <strong>cdr</strong> function. We can think of
+the combination of car and cdr as taking off the head of the list, which leaves us
+with one single item (the car) and the remaining linked list (the cdr). Thus cdr,
+if called on a proper list, always returns a list. Though the list it returns
+could be the null list, if the head was the last proper item.
+An example is worth a thousand words here:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a list</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">l</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; get the car of l</span>
+<span class="p">(</span><span class="nb">car </span><span class="nv">l</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="c1">; get the cdr of l, it&#39;s always a list</span>
+<span class="p">(</span><span class="nb">cdr </span><span class="nv">l</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Because cdr returns a list, we can get the cdr of a cdr - this
+is like chopping off the head twice - and we still get a list:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get the cdr of cdr of l</span>
+<span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">l</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; note the above is a *list* with 3, not 3 itself!</span>
+
+<span class="c1">; the very last cdr is the null list</span>
+<span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">l</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+
+<span class="c1">; which can be checked with the null? predicate</span>
+<span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">l</span><span class="p">))))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; but is also still a list!</span>
+<span class="p">(</span><span class="nb">list? </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">l</span><span class="p">))))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+</pre></div>
+</div>
+<p>So it’s important to remember that a proper list is a set of value/pointer entries, where
+the last one points to the null list. The value-pointer pairs
+have a special name: <strong>cons cells</strong>.</p>
+<p>In addition to making lists with the list function, we can use the <strong>cons</strong> function.
+The list function does the magic for us, while <strong>cons</strong> involves us in the
+underlying linked-list. We use cons to add a new cons cell by passing in
+an item, and a list that our new cell should link to.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; extend our list at the front</span>
+<span class="p">(</span><span class="nb">cons </span><span class="mi">0</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that cons <em>makes a new list</em>. This is an important distinction. Making
+a new list by adding a cell to the head doesn’t change an old list starting
+at a different head:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">list-a</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">list-b</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">0</span> <span class="nv">list-a</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="nv">list-a</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="nv">list-b</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the above example, the cdr of list-b <em>is</em> list-a.</p>
+<p>To make a list from scratch with cons, we must backwards, starting
+with the null list. And we make the null list by quoting the printed representation
+of an empty list, <strong>‘()</strong>.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">null? </span><span class="o">&#39;</span><span class="p">())</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; make a list by cons&#39;ing to the null list</span>
+<span class="p">(</span><span class="nb">cons </span><span class="mi">3</span> <span class="o">&#39;</span><span class="p">())</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; make a list by cons&#39;ing 3 times</span>
+<span class="p">(</span><span class="nb">cons </span><span class="mi">1</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">2</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">3</span> <span class="o">&#39;</span><span class="p">())))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If we want to add to the end of a list, we need to use the <strong>append</strong> function,
+which takes multiple lists as arguments returns a new list consisting
+of the joined argument lists. This means that, unlike
+cons, the item to be added needs to itself be a list. Like cons,
+the result is a new list, and the original lists are unchanged.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a list, by joining two lists</span>
+<span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span>
+
+<span class="c1">; add one item to a list</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">l</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">append </span><span class="nv">l</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
+
+<span class="c1">; note that l is unchanged!</span>
+<span class="nv">l</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; or with quote</span>
+<span class="p">(</span><span class="nb">append </span><span class="nv">l</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Append can have as many arguments as you want</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">3</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">5</span> <span class="mi">6</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that if you call append with a final element that is <em>not</em> a list,
+you won’t get an error… but you also won’t get a proper list. This is
+because the final item is an atomic value instead of a value/pointer pair.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The dot before 4 indicates that the list stopped being a proper list
+at the third item. Improper lists are used in various places, but most typically
+as pairs, also called <em>dotted pairs</em>. We get them when we use cons, <em>without</em> ending our chain
+with the null list:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; consing to an atomic value produces a dotted pair</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-pair</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">.</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Under the hood, a dotted pair consists of two cells: the first
+has a value and a pointer to the next cell, and the second has only a value.
+This means we can use car and cdr, but there is no cdr of the second element.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; consing to an atomic value produces a dotted pair</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-pair</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">.</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">car </span><span class="nv">my-pair</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="p">(</span><span class="nb">cdr </span><span class="nv">my-pair</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">2</span>
+
+<span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">my-pair</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error:</span> <span class="nv">cdr</span> <span class="nv">argument</span> <span class="mi">2</span> <span class="nv">is</span> <span class="nv">an</span> <span class="nv">integer,</span> <span class="nv">but</span> <span class="nv">should</span> <span class="nv">be</span> <span class="nv">a</span> <span class="nv">pair</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Dotted-pairs and improper lists are important to understand as you’ll
+use them when looping through data structures such as association
+lists and hash-tables, both of which have pairs of key and value.</p>
+<div class="section" id="list-accessor-shortcuts">
+<h3>List accessor shortcuts<a class="headerlink" href="#list-accessor-shortcuts" title="Permalink to this headline">¶</a></h3>
+<p>Finally, and these gets almost silly but are convenient, there
+are shortcuts for combinations of car and cdr that are useful
+when working with nested lists. These can always be replaced
+by nested combinations of car and cdr, so you don’t need to know
+them. But you are quite likely to see them in other lisp code,
+so it’s worth knowing they exist, and they can make some code more
+readable (or at least, to someone who knows these oddball functions!).</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; car of nested list</span>
+<span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1">; cdr of nested list</span>
+<span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">4</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="c1">; caar gets the car of the car</span>
+<span class="p">(</span><span class="nb">caar </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">0</span>
+
+<span class="c1">; cdar gets the cdr, of the car - which is a list</span>
+<span class="p">(</span><span class="nb">cdar </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1">; cadr gets the car, of the cdr</span>
+<span class="c1">; aka the first item of the cdr of the outer list</span>
+<span class="p">(</span><span class="nb">cadr </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; cddr gets the cdr of the cdr, which is a list of lists</span>
+<span class="p">(</span><span class="nb">cddr </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="mi">4</span> <span class="mi">5</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This continues on to 5 letter combinations, like <em>cadar</em>, and
+honestly, you don’t need to know these. But as you may well encounter
+code with functions consisting of strings of c,a,d, and r, know
+you’ll know what you’re seeing.</p>
+</div>
+</div>
+<div class="section" id="optional-function-arguments">
+<h2>Optional function arguments<a class="headerlink" href="#optional-function-arguments" title="Permalink to this headline">¶</a></h2>
+<p>Know that we know about lists, we can use them for creating functions
+that can be called with a variable number of arguments. (Also known as “multi-arity
+functions” if you want to talk fancy computer science lingo!)
+This is done by using dotted notation in the function argument, which will
+put any arguments past the explicitly named arguments into a list. This list will be
+the null list if no additional arguments are given:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; one mandatory argument x, and 0 or more optionals</span>
+<span class="c1">; the list &#39;args&#39;</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun</span> <span class="nv">x</span> <span class="o">.</span> <span class="nv">args</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;called with&quot;</span> <span class="p">(</span><span class="nb">length </span><span class="nv">args</span><span class="p">)</span> <span class="s">&quot;optional args&quot;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;optional args:&quot;</span> <span class="nv">args</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-fun</span>
+
+<span class="p">(</span><span class="nf">my-fun</span> <span class="mi">1</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">called</span> <span class="nv">with</span> <span class="mi">0</span> <span class="nv">optional</span> <span class="nv">args</span>
+<span class="nv">s4m:</span> <span class="nv">optional</span> <span class="nv">args:</span> <span class="p">()</span>
+<span class="nv">s4m&gt;</span> <span class="o">&#39;</span><span class="p">()</span>
+
+<span class="p">(</span><span class="nf">my-fun</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">called</span> <span class="nv">with</span> <span class="mi">2</span> <span class="nv">optional</span> <span class="nv">args</span>
+<span class="nv">s4m:</span> <span class="nv">optional</span> <span class="nv">args:</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="o">&#39;</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This can be done with lambda as well, but lambda has an additional option.
+If the argument list for a lambda is only one symbol, this symbol will be
+bound to a list of all the arguments.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a lambda that bundles all its args into a list</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-lambda</span> <span class="p">(</span><span class="k">lambda </span><span class="nv">args</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;args:&quot;</span> <span class="nv">args</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-lambda</span>
+
+<span class="p">(</span><span class="nf">my-lambda</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">args:</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="o">&#39;</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>s7 Scheme borrows heavily from Common Lisp, and includes two non-standard special forms,
+<strong>define*</strong> and <strong>lambda*</strong>, that give us the ability to use <em>keyword arguments</em> with
+default values in our function definitions. We do this by using lists of key and default
+value in place of arguments. To call the function with a keyword argument, we pass in a
+keyword and a value pair for that argument. This is most easily explained with the example
+below, taken straight from the s7 documentation:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function with one required argument, a, and two optional</span>
+<span class="c1">; keyword args, b &amp; c, with default values of 32 and &quot;hi&quot;</span>
+<span class="p">(</span><span class="nf">define*</span> <span class="p">(</span><span class="nf">hi</span> <span class="nv">a</span> <span class="p">(</span><span class="nf">b</span> <span class="mi">32</span><span class="p">)</span> <span class="p">(</span><span class="nf">c</span> <span class="s">&quot;hi&quot;</span><span class="p">))</span>
+  <span class="c1">; returns a list of the arguments</span>
+  <span class="p">(</span><span class="nb">list </span><span class="nv">a</span> <span class="nv">b</span> <span class="nv">c</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">hi</span>
+
+<span class="c1">; call hi with only one argument and we get the defaults</span>
+<span class="p">(</span><span class="nf">hi</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">32</span> <span class="s">&quot;hi&quot;</span><span class="p">)</span>
+
+<span class="c1">; call hi with three arguments, and we use them all</span>
+<span class="p">(</span><span class="nf">hi</span> <span class="mi">99</span> <span class="mi">88</span> <span class="mi">77</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">88</span> <span class="mi">77</span><span class="p">)</span>
+
+<span class="c1">; call hi with one argument and one keyword argument</span>
+<span class="p">(</span><span class="nf">hi</span> <span class="mi">99</span> <span class="nv">:c</span> <span class="mi">77</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">32</span> <span class="mi">77</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vectors">
+<h2>Vectors<a class="headerlink" href="#vectors" title="Permalink to this headline">¶</a></h2>
+<p>Lists do have some disadvantages. Linked lists need to be traversed to get to their
+contents, which means that accessing elements deep in a long list can be slow. And
+adding items to the end of a list requires copying the entire list with append.
+In music situations, we often need to access anywhere in a sequential data structure,
+or add items at the end of a table, so for these types of cases, a more appropriate type is the <strong>vector</strong>.
+Like lists, vectors can hold any data type, and can hold multiple data types within
+a vector. If we want to model Max data that would be in a buffer
+or table in Max, the vector is likely what we want.</p>
+<p>Note that the printed representation of a vector starts with <strong>#</strong> to differentiate
+it from a list.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; create a vector, containing 1 2 3 4</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">v</span> <span class="p">(</span><span class="nb">vector </span><span class="mi">10</span> <span class="mi">11</span> <span class="mi">12</span> <span class="mi">13</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span><span class="mi">10</span> <span class="mi">11</span> <span class="mi">12</span> <span class="mi">13</span><span class="p">)</span>
+
+<span class="c1">; get its length</span>
+<span class="p">(</span><span class="nb">vector-length </span><span class="nv">v</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">4</span>
+
+<span class="c1">; is it really a vector?</span>
+<span class="p">(</span><span class="nb">vector? </span><span class="nv">v</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; access an element</span>
+<span class="p">(</span><span class="nb">vector-ref </span><span class="nv">v</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">12</span>
+
+<span class="c1">; or with applicative syntax</span>
+<span class="p">(</span><span class="nf">v</span> <span class="mi">0</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">10</span>
+
+<span class="c1">; set with vector-set!</span>
+<span class="p">(</span><span class="nb">vector-set! </span><span class="nv">v</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="nv">v</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">11</span> <span class="mi">12</span> <span class="mi">13</span><span class="p">)</span>
+
+<span class="c1">; or with applicative syntax</span>
+<span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">v</span> <span class="mi">0</span><span class="p">)</span> <span class="mi">100</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
+
+<span class="c1">; make a vector using quote and the # sign</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">v</span> <span class="o">&#39;#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that Max only has a list type for messages, so when we cross the Max to Scheme
+boundary and vice versa, it’s worth thinking about which type is appropriate.
+Vectors can be converted to and from lists easily, and S4M will use vectors instead
+of lists in places where that makes sense. For example, in reading a Max dictionary into
+Scheme, arrays in the dictionary will be converted to vectors instead of Scheme lists.
+And s4m has functions for copying from tables and buffers to vectors, and vice versa.
+We won’t cover those here, but they are detailed in the s4m documentation.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; conversions</span>
+<span class="p">(</span><span class="nb">vector-&gt;list </span><span class="o">&#39;#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nb">list-&gt;vector </span><span class="o">&#39;</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can also make a vectors without specifying first what they will hold with
+<strong>make-vector</strong>:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a 4 point vector</span>
+<span class="p">(</span><span class="nb">make-vector </span><span class="mi">4</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span> <span class="p">)</span>
+
+<span class="c1">; this is more useful if we pass a starting value</span>
+<span class="p">(</span><span class="nb">make-vector </span><span class="mi">4</span> <span class="mi">0</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>s7 supports multi-dimensional vectors. We create these by passing
+a list to make vector where the vector size argument goes. The lists
+specifies the size in as many dimensions as we want.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a 2 x 3 vector, initialized to 0</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">v2x3</span> <span class="p">(</span><span class="nb">make-vector </span><span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="mi">0</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="mi">2</span><span class="nv">d</span><span class="p">((</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">))</span>
+
+<span class="c1">; read from the vector</span>
+<span class="p">(</span><span class="nf">v2x3</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">0</span>
+
+<span class="c1">; set with applicative syntax</span>
+<span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">v2x3</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="nv">v2x3</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="mi">2</span><span class="nv">d</span><span class="p">((</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>s7 has quite a few interesting additional vector functions, especially around
+multi-dimensional vectors, that you can read about on the official s7 page.</p>
+</div>
+<div class="section" id="hash-tables">
+<h2>Hash-Tables<a class="headerlink" href="#hash-tables" title="Permalink to this headline">¶</a></h2>
+<p>Hash-tables are key-value stores, similar to dictionaries in Python or JavaScript.
+A key can be anything we’d like, but it’s most common to use a keyword as a key,
+or barring that, a symbol.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; create a hash-table, with keys :a and :b</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-hash</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1">;; read value at :a</span>
+<span class="p">(</span><span class="nf">hash-table-ref</span> <span class="nv">my-hash</span> <span class="nv">:a</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="c1">;; set value at :b</span>
+<span class="p">(</span><span class="nf">hash-table-set!</span> <span class="nv">my-hash</span> <span class="nv">:b</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>Asking for a value that is not in a hash-table returns <strong>#f</strong>, and we can remove
+an item from a hash-table by storing <strong>#f</strong> at the key. We can put a new item
+in the hash-table by setting it’s value with a key.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; ask for a value not in our hash</span>
+<span class="p">(</span><span class="nf">hash-table-ref</span> <span class="nv">my-hash</span> <span class="nv">:c</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
+
+<span class="c1">;; add :c entry</span>
+<span class="p">(</span><span class="nf">hash-table-set!</span> <span class="nv">my-hash</span> <span class="nv">:c</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="c1">;; delete entry :b</span>
+<span class="p">(</span><span class="nf">hash-table-set!</span> <span class="nv">my-hash</span> <span class="nv">:b</span> <span class="no">#f</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
+
+<span class="c1">;; inspect our hash now, b is now gone</span>
+<span class="nv">my-hash</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:c</span> <span class="mi">99</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As noted earlier, s7 Scheme supports <em>applicative syntax</em> for compound data types,
+and this works for hash-tables too, allowing us to get a value from a hash-table by
+calling the hash-table as a function with the key as an argument</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get :a, calling my-hash like a function</span>
+<span class="p">(</span><span class="nf">my-hash</span> <span class="nv">:a</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>As with lists, calling the hash-table with a key gives us a memory location,
+and we can thus also use this with <strong>set!</strong>:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; set :a, with applicative syntax</span>
+<span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">my-hash</span> <span class="nv">:a</span><span class="p">)</span> <span class="mi">42</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">42</span>
+</pre></div>
+</div>
+<p>Hash-tables can be nested.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">deep-hash</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:c</span> <span class="mi">3</span> <span class="nv">:d</span> <span class="mi">4</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:c</span> <span class="mi">3</span> <span class="nv">:d</span> <span class="mi">4</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Applicative syntax is very helpful for nested hash-tables. Note
+that this syntax only works for applicative syntax, <em>not</em> for
+<strong>hash-table-ref</strong>:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="nv">:get</span> <span class="nv">contents</span> <span class="nv">of</span> <span class="nv">:c,</span> <span class="nv">at</span> <span class="nv">contents</span> <span class="nv">of</span> <span class="nv">:b</span>
+<span class="p">(</span><span class="nf">deep-hash</span> <span class="nv">:b</span> <span class="nv">:c</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+</pre></div>
+</div>
+<p>We can set this way too:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="nv">:set</span> <span class="nv">:b</span> <span class="nv">:c</span>
+<span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">deep-hash</span> <span class="nv">:b</span> <span class="nv">:c</span><span class="p">)</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
+<p>Be aware though, that trying to use a chain of keys is an error past the first
+non-existent key, for either getting or setting:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">deep-hash</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:c</span> <span class="mi">3</span> <span class="nv">:d</span> <span class="mi">4</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:c</span> <span class="mi">3</span> <span class="nv">:d</span> <span class="mi">4</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">deep-hash</span> <span class="nv">:z</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
+
+<span class="p">(</span><span class="nf">deep-hash</span> <span class="nv">:a</span> <span class="nv">:z</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
+
+<span class="p">(</span><span class="nf">deep-hash</span> <span class="nv">:z</span> <span class="nv">:x</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error</span><span class="o">....</span>
+
+<span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">deep-hash</span> <span class="nv">:z</span> <span class="nv">:y</span> <span class="nv">:x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error</span><span class="o">....</span>
+</pre></div>
+</div>
+<p>If we stick to simple types as keys (numbers, symbols,
+keywords), we can convert hash-tables to Max dictionaries and vice versa, writing
+and reading from Max dictionaries. See the Scheme For Max documentation for details
+on these functions.</p>
+</div>
+<div class="section" id="branching-with-if">
+<h2>Branching with if<a class="headerlink" href="#branching-with-if" title="Permalink to this headline">¶</a></h2>
+<p>In Scheme, we typically branch using one of two special forms: <strong>if</strong> and <strong>cond</strong>.
+These are both <em>special forms</em> - they look like function calls but are not
+evaluated the same way as functions. The <strong>if</strong> special form takes
+three clauses. The first is the <strong>predicate</strong>, that which is tested to determine
+which branch we take. The second is the expression that is evaluated and returned if the predicate
+evaluates to true. And the third is the expression that is evaluated and returned if the predicate fails.
+Thus the value returned by an if expression is the value of evaluating either the first or second result clause.
+These clauses can be either simple values, or s-expressions that are evaluated to
+return a value. The reason <strong>if</strong> is a special form is that the s-expressions
+for the clauses <em>only</em> evaluate if that clause is to be returned.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; return 99 if test-var is 33, else return 66</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">test-var</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+<span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">99</span> <span class="nv">test-var</span><span class="p">)</span> <span class="mi">33</span> <span class="mi">66</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">33</span>
+
+<span class="c1">;; using the above to set a variable</span>
+<span class="p">(</span><span class="k">set! </span><span class="nv">my-var</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">99</span> <span class="nv">test-var</span><span class="p">)</span> <span class="mi">33</span> <span class="mi">66</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">33</span>
+
+<span class="c1">;; an if statement that returns the results of s-exp evaluation</span>
+<span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">99</span> <span class="nv">test-var</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="mi">32</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="mi">66</span> <span class="mi">4</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">33</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="grouping-statements-with-begin">
+<h2>Grouping statements with begin<a class="headerlink" href="#grouping-statements-with-begin" title="Permalink to this headline">¶</a></h2>
+<p>So far, if looks just like a function. The fact that it is not a function
+is illustrated if we put side effects in our two clauses. If we want to
+add a side effect to a clause that will return a value, we can enclose
+child expressions in a <strong>begin</strong> statement. All expressions in the body
+of the begin are evaluated, but only the last expression is returned.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">begin </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+
+<span class="c1">;; an if statement that returns the results of s-exp evaluation</span>
+<span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="p">(</span><span class="k">begin </span><span class="p">(</span><span class="nf">post</span> <span class="s">&quot;first clause!&quot;</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">32</span> <span class="mi">1</span><span class="p">))</span>
+      <span class="p">(</span><span class="k">begin </span><span class="p">(</span><span class="nf">post</span> <span class="s">&quot;second clause!&quot;</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">66</span> <span class="mi">4</span><span class="p">)))</span>
+<span class="nv">s4m:</span> <span class="nv">first</span> <span class="nv">clause!</span>
+<span class="nv">s4m&gt;</span> <span class="mi">33</span>
+</pre></div>
+</div>
+<p>When we run the above, we see that our console only shows
+the output from the first clause. If <strong>if</strong> was a function, we would
+see the output from both clauses, because of the fact that
+expressions are evaluated from the inside out. The fact that <strong>if</strong>
+breaks the rules of normal function execution is what makes it a special form.</p>
+<p>We don’t <em>need</em> to use a begin statement, we could just put side
+effect expressions in the slots, as long as we have made sure that
+it’s ok that the entire <strong>if</strong> form evaluates to whatever is
+returned in the clause (i.e. the null list, potentially).</p>
+<p>In S7, we can skip the final clause in an if statement, in which case
+the return value of the if is <strong>unspecified</strong> if the predicate fails.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; if var = 1, if evaluates to null, else to unspecified</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">var</span> <span class="mi">2</span><span class="p">)</span>
+<span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="nv">var</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;first clause!&quot;</span><span class="p">))</span> <span class="c1">;post returns null, so the if will too</span>
+<span class="nv">s4m&gt;</span> <span class="nv">&lt;unspecified&gt;</span>
+</pre></div>
+</div>
+<p>This is a good time to discuss predicates and truth in Scheme, because it’s a
+bit different from what you may be used to other languages.</p>
+<p><strong>In Scheme, only #false is false</strong>.</p>
+<p>Repeat that three times. False can be expressed as either <strong>#f</strong> or <strong>#false</strong>,
+but nothing else ever equals false. Not zero (like C), not the null list
+(like Common Lisp), not an empty data structure. Nothing except <strong>#false</strong>!</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; only false is false!</span>
+<span class="p">(</span><span class="k">if </span><span class="mi">0</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I post!&quot;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;but I don&#39;t, because I never get evaluated!&quot;</span><span class="p">)</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>This is useful in Max, because Max has no notion of boolean True or False.
+In Max, we express booleans with 1 or 0. Which means that we can indicate
+an <em>invalid</em> Max value using Scheme’s #false, and we can test
+for a valid (or existing) value by using the value in a predicate. This
+will come in handy when we get to dictionaries and hash-tables.</p>
+<p>Scheme has many predicate functions which returns #f if they fail, and end in a <strong>?</strong>.
+For example, if we want to test whether a value is the <strong>null list</strong> (an empty list),
+we can use the <strong>null?</strong> predicate.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; if var is the null list, post</span>
+<span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">var</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Var is the null list.&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>We’ve seen some of these already, but some other useful predicates are
+<strong>defined?</strong>, <strong>procedure?</strong>, <strong>symbol?</strong>, <strong>number?</strong>, <strong>list?</strong>, <strong>keyword?</strong>.</p>
+<p>It is idiomatic Scheme to name your own predicates similarly.
+Not all Scheme implementations have the same predicates built in,
+so if you look up a predicate online, you probably want to test it
+in the REPL to make sure it’s in S74, or add it to your base file.</p>
+</div>
+<div class="section" id="testing-equality">
+<h2>Testing equality<a class="headerlink" href="#testing-equality" title="Permalink to this headline">¶</a></h2>
+<p>Testing equality in Scheme is a bit different than you might be used to in other languages
+as well.</p>
+<p>Numeric equality is tested with <strong>=</strong>, but note that we do not have
+a question mark. Types of numbers (integers, floats, fractions) will be properly cast
+to each other:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; testing numbers for equality</span>
+<span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">2</span><span class="nv">/2</span><span class="p">)</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">1</span><span class="p">)</span>
+<span class="p">(</span><span class="nb">= </span><span class="nv">a</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="no">#t</span>
+</pre></div>
+</div>
+<p>Testing whether non-numeric values are the same can be done with <strong>eqv?</strong>. This
+tests whether the pointers point to <em>the same thing</em>.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; two vars to the same list are equivalent</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">a-alias</span> <span class="nv">a</span><span class="p">)</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="nv">a</span> <span class="nv">a-alis</span><span class="p">)</span>
+<span class="no">#t</span>
+
+<span class="c1">; but not equivalent to some other list with the same values</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="nv">a</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="no">#f</span>
+
+<span class="c1">; this works for functions and symbols too</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">var-pointing-to-post</span> <span class="nv">post</span><span class="p">)</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="nv">var-pointing-to-post</span> <span class="nv">post</span><span class="p">)</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">the-sym</span> <span class="ss">&#39;my-symbol</span><span class="p">)</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="nv">the-sym</span> <span class="ss">&#39;my-symbol</span><span class="p">)</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="ss">&#39;my-symbol</span> <span class="ss">&#39;my-symbol</span><span class="p">)</span>
+<span class="no">#t</span>
+
+<span class="c1">; simple types are equivalent only if no cast is involved</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="mi">1</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="no">#f</span>
+</pre></div>
+</div>
+<p>Testing whether compound types are the same, element by element, can
+be done with <strong>equal?</strong>. This tests the <em>contents</em> of the compound
+type, not the pointers.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; test a list</span>
+<span class="p">(</span><span class="nb">equal? </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">l1</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">l2</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="c1">; their contents are the same</span>
+<span class="p">(</span><span class="nb">equal? </span><span class="nv">l1</span> <span class="nv">l2</span><span class="p">)</span>
+<span class="no">#t</span>
+<span class="c1">; but they don&#39;t point to the same address in memory</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="nv">l1</span> <span class="nv">l2</span><span class="p">)</span>
+<span class="no">#f</span>
+
+<span class="c1">; this works for strings, symbols, and keywords too</span>
+<span class="p">(</span><span class="nb">equal? </span><span class="s">&quot;foo&quot;</span> <span class="s">&quot;foo&quot;</span><span class="p">)</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="nb">equal? </span><span class="ss">&#39;foo</span> <span class="ss">&#39;foo</span><span class="p">)</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">keyfoo</span> <span class="nv">:foo</span><span class="p">)</span>
+<span class="p">(</span><span class="nb">equal? </span><span class="nv">keyfoo</span> <span class="nv">:foo</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>There is one more variant, <strong>eq?</strong>. In S7, <strong>eq?</strong> is almost
+entirely the same as <strong>eqv?</strong>, but this is not always the case
+in all Scheme implementations. For the most part, in S7 you can
+just use <strong>eq?</strong> and <strong>eqv?</strong> interchangeably. Different implementations
+vary in their treatment of the empty list (the “null list”), which
+we will cover in detail later.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; is the null list the same as the null list?</span>
+<span class="p">(</span><span class="nb">eq? </span><span class="p">(</span><span class="nf">list</span><span class="p">)</span> <span class="p">(</span><span class="nf">list</span><span class="p">))</span>
+<span class="c1">; s7 says yes! (not all do)</span>
+<span class="no">#t</span>
+<span class="p">(</span><span class="nb">eqv? </span><span class="p">(</span><span class="nf">list</span><span class="p">)</span> <span class="p">(</span><span class="nf">list</span><span class="p">))</span>
+<span class="no">#t</span>
+</pre></div>
+</div>
+<p>When in doubt, test your equality checks in the repl! But in general,
+numeric equivalence uses <strong>=</strong>, non-numeric and compound type equality uses
+<strong>equal?</strong>, and pointer comparison uses <strong>eq?</strong> and/or <strong>eqv?</strong>.</p>
+</div>
+<div class="section" id="logical-operators-and-or-not">
+<h2>Logical operators: and, or, not<a class="headerlink" href="#logical-operators-and-or-not" title="Permalink to this headline">¶</a></h2>
+<p>Testing complex conditions often requires logical operators, for which Scheme
+provides us <strong>and</strong>, <strong>or</strong>, and <strong>not</strong>.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; and returns true only if all predicates return true</span>
+<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">&gt; </span><span class="mi">2</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt; </span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; or returns true if any return true</span>
+<span class="p">(</span><span class="k">or </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
+<span class="c1">; not returns the negation of a boolean</span>
+<span class="p">(</span><span class="nb">not </span><span class="p">(</span><span class="k">or </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
+</pre></div>
+</div>
+<p>These are <em>special forms</em>, not regular functions, meaning that evaluation doesn’t
+follow the regular function evaluation rules of evaluating all subexpressions and
+passing the <em>results</em> in as arguments. Rather, these <em>short-circuit</em>. This can
+be useful if we want to evaluate some expressions only if previous expressions
+have returned either true or false.  Remember, in a boolean context, only
+#false is #false!</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; evaluate the second expression only if the first is true</span>
+<span class="c1">; note: the return value is from the last evaluated expression</span>
+<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I ran!&quot;</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
+</pre></div>
+</div>
+<p>If <strong>and</strong> were a function, we would see our post statement running regardless
+of the result of the first expression, but it only excecutes if all expressions
+return a non-false value:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I ran!&quot;</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="nv">I</span> <span class="nv">ran!</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+
+<span class="c1">; add another non-false expression and it will be the return value</span>
+
+<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I ran!&quot;</span><span class="p">)</span> <span class="mi">42</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">I</span> <span class="nv">ran!</span>
+<span class="nv">s4m&gt;</span> <span class="mi">42</span>
+</pre></div>
+</div>
+<p>This can be used with <strong>or</strong> as well, with expressions evaluating
+until one of them returns true. This can be a convenient way to
+make something happen if a previous something returns false. For
+example, we know that a hash-table returns false if asked for a non-existent
+key, so this can be used to create a fall-back value</p>
+</div>
+<div class="section" id="branching-with-cond">
+<h2>Branching with cond<a class="headerlink" href="#branching-with-cond" title="Permalink to this headline">¶</a></h2>
+<p>The <strong>cond</strong> special form allows us to provide a series of predicate
+and result pairs. Evaluation stops when the first predicate passes. When
+combined with predicates and logical operators, this gives us everything
+we need to implement complex control flow.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; return some numbers for several values of x</span>
+<span class="p">(</span><span class="nf">cond</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">7</span> <span class="nv">x</span><span class="p">)))</span>
+
+<span class="c1">;; to illustrate that these are just pairs of expressions,</span>
+<span class="c1">;; here&#39;s a cond that returns 99</span>
+<span class="p">(</span><span class="k">cond </span><span class="p">(</span><span class="no">#f</span> <span class="no">#f</span><span class="p">)</span> <span class="p">(</span><span class="no">#t</span> <span class="mi">99</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>If no clause succeeds, cond will return <strong>unspecified</strong> (at least in S7!).
+To avoid this, it is common to return <strong>#f</strong> in an <strong>else</strong> clause. Interestingly,
+<strong>else</strong> is just a short-form for returning true - all we need
+is a predicate that passes.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; return 10 for several values of x, or false for unhandled instance</span>
+<span class="p">(</span><span class="nf">cond</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">(</span><span class="k">else </span><span class="no">#f</span><span class="p">))</span>
+
+<span class="c1">;; because only false is false, this technically works too</span>
+<span class="c1">;; but you won&#39;t be popular coding like this....</span>
+<span class="p">(</span><span class="nf">cond</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">(</span><span class="mi">0</span> <span class="no">#f</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Again, if we want conditional side effects, we can use <strong>begin</strong>:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; branching with side effects</span>
+<span class="p">(</span><span class="nf">cond</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">begin</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;x is 1&quot;</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">)))</span>
+  <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">begin</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;x is 2&quot;</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">)))</span>
+  <span class="p">(</span><span class="nf">else</span>
+    <span class="p">(</span><span class="nf">begin</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;unhandled x!&quot;</span><span class="p">)</span>
+      <span class="no">#f</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="scope-and-the-let-statement">
+<h2>Scope and the let statement<a class="headerlink" href="#scope-and-the-let-statement" title="Permalink to this headline">¶</a></h2>
+<p>In computer science, ‘scope’ referes to where and when the binding
+of a symbol to a variable or function is in effect. Scheme is
+a <em>lexically scoped</em> language, allowing us to use functions and
+scopes in powerful ways, some of which we will look at in this book.
+To use Scheme effectively, and to take advantage of its lexical
+scoping for real time interactivity in Max, we need to
+understand Scheme scoping and how to use the <strong>let</strong> form.</p>
+<p>When we make definitions in scm file or send them to the interpreter
+from Max messages, bindings execute in the <strong>global scope</strong>, also
+refered to as the “top-level scope”.  These bindings are visible in
+any other expression or function, unless shadowed by bindings local
+to the expression or function.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a global variable</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">var</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="c1">;; define a function, it can access var</span>
+<span class="c1">;; if we tried to run this function prior to defining var</span>
+<span class="c1">;; we&#39;d get an error</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;var:&quot;</span> <span class="nv">var</span><span class="p">)</span>
+  <span class="c1">; return var + 1</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">var</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-fun</span>
+
+<span class="p">(</span><span class="nf">my-fun</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">var:</span> <span class="mi">99</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
+
+<span class="c1">;; change var in the global scope &amp; the change is visible</span>
+<span class="c1">;; in the body of the function</span>
+<span class="p">(</span><span class="k">set! </span><span class="nv">var</span> <span class="mi">100</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
+
+<span class="p">(</span><span class="nf">my-fun</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">var:</span> <span class="mi">100</span>
+<span class="nv">s4m&gt;</span> <span class="mi">101</span>
+</pre></div>
+</div>
+<p>If we change a variable from an outer scope inside a function body,
+by using <strong>set!</strong>, this  will change the variable in the outer scope.
+A common convention in Scheme is to name functions ending in an exclamation
+mark if they have side-effects on external definitions.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a global var, var</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">var</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+
+<span class="c1">;; define a function that access and mutates var</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun!</span><span class="p">)</span>
+  <span class="c1">; set outer var, and return the value</span>
+  <span class="p">(</span><span class="k">set! </span><span class="nv">var</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">var</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-fun!</span>
+
+<span class="p">(</span><span class="nf">my-fun!</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
+
+<span class="c1">; var has changed in the global scope</span>
+<span class="nv">var</span>
+<span class="nv">s4m&gt;</span> <span class="mi">101</span>
+</pre></div>
+</div>
+<p>Function parameters create bindings that are active in the function body,
+making an inner scope. This is also called “function scope”. The
+function scope will have the values of the arguments passed
+to the function bound to the symbols used as function parameters.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a function with a local binding</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun-2</span> <span class="nv">var</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;var in my-fun-2:&quot;</span> <span class="nv">var</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">set! </span><span class="nv">var</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">var</span><span class="p">))</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;var in my-fun-2 now:&quot;</span> <span class="nv">var</span><span class="p">)</span>
+  <span class="c1">; return var</span>
+  <span class="nv">var</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-fun-2</span>
+
+<span class="c1">;; call it</span>
+<span class="p">(</span><span class="nf">my-fun-2</span> <span class="mi">42</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">var</span> <span class="nv">in</span> <span class="nv">my-fun-2:</span> <span class="mi">42</span>
+<span class="nv">s4m:</span> <span class="nv">var</span> <span class="nv">in</span> <span class="nv">my-fun-2</span> <span class="nv">now:</span> <span class="mi">43</span>
+<span class="nv">s4m&gt;</span> <span class="mi">43</span>
+
+<span class="c1">;; make a global variable with the same name, &#39;var&#39;</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">var</span> <span class="mi">42</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">42</span>
+
+<span class="c1">;; call our function with it, returns 43 as before</span>
+<span class="p">(</span><span class="nf">my-fun-2</span> <span class="nv">var</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">var</span> <span class="nv">in</span> <span class="nv">my-fun-2:</span> <span class="mi">42</span>
+<span class="nv">s4m:</span> <span class="nv">var</span> <span class="nv">in</span> <span class="nv">my-fun-2</span> <span class="nv">now:</span> <span class="mi">43</span>
+<span class="nv">s4m&gt;</span> <span class="mi">43</span>
+
+<span class="c1">;; check our global var - no change!</span>
+<span class="p">(</span><span class="nf">post</span> <span class="nv">var</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="mi">42</span>
+</pre></div>
+</div>
+<p>So what’s going on here? The local binding of the symbol
+var in my-fun-2 is separate from the global binding;
+it’s a new variable that happens to have the same name. This
+results in the new variable - var in the scope of my-fun-2 -
+<em>shadowing</em> the global variable. When we use <strong>set!</strong> inside
+my-fun-2, only the local version is updated. After the
+function exits, its scope becomes inactive and the symbol
+‘var’ will again refer to the global variable.</p>
+<p>The <strong>let</strong> special form creates a local scope. It takes
+an expression with a series of bindings of
+symbol and value, and a body that is executed with those
+bindings. The let statement returns the value of the
+last expression in the body. Within the body of the let,
+any bindings defined by the let’s first clause will shadow
+any identically named bindings in outer scopes.
+Unlike a function, a let executes its body right away.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a scope with two local bindings</span>
+<span class="p">(</span><span class="nf">let</span>
+  <span class="p">((</span><span class="nf">a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="mi">2</span><span class="p">))</span> <span class="c1">; bindings</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>      <span class="c1">; body, does addition, returns value</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+
+<span class="c1">;; the body can have many expressions</span>
+<span class="c1">;; the value returned by let is the last one</span>
+<span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="mi">2</span><span class="p">))</span>   <span class="c1">; bindings</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;a:&quot;</span> <span class="nv">a</span><span class="p">)</span>      <span class="c1">; body with 3 expressions</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;b:&quot;</span> <span class="nv">b</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="s">&quot;a:&quot;</span> <span class="mi">1</span>
+<span class="nv">s4m:</span> <span class="s">&quot;b:&quot;</span> <span class="mi">2</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+</pre></div>
+</div>
+<p>As far as scoping rules are concerned, variables defined
+by a let are treated in the body of the let <em>exactly</em> the
+same way as function paramaters are treated in the body of a
+function. Under the hood, they are equivalent. These two
+are completely equivalent:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; use a let</span>
+<span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="mi">2</span><span class="p">))</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+
+<span class="c1">; use a lambda and call it immediately</span>
+<span class="p">((</span><span class="nf">lamdba</span> <span class="p">(</span><span class="nf">a</span> <span class="nv">b</span><span class="p">)(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">3</span>
+</pre></div>
+</div>
+<p>In Scheme, a let literally <em>is</em> an immediately executed lambda.
+This is worth taking a moment to understand!</p>
+<p>A regular let has all bindings defined at the same time,
+(order not guaranteed) meaning that a binding cannot refer to a previous binding:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; an error, the second binding won&#39;t work!</span>
+<span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">a</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="p">(</span><span class="nb">* </span><span class="nv">a</span> <span class="nv">a</span><span class="p">)))</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>However, we can do this if we use <strong>let*</strong>:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; OK!</span>
+<span class="p">(</span><span class="k">let* </span><span class="p">((</span><span class="nf">a</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="p">(</span><span class="nb">* </span><span class="nv">a</span> <span class="nv">a</span><span class="p">)))</span>
+  <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">6</span>
+</pre></div>
+</div>
+<p>Under the hood, this actually executes as two nested lets:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">a</span> <span class="mi">2</span><span class="p">))</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">b</span> <span class="p">(</span><span class="nb">* </span><span class="nv">a</span> <span class="nv">a</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>We can use a let in the body of a function to create temporary
+variables local to a function.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; define a function with an inner let</span>
+<span class="c1">; the last sexpr in the let is returned by the let</span>
+<span class="c1">; and thus also by my-fun</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun</span> <span class="nv">a</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">b</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">c</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span> <span class="nv">c</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="nf">my-fun</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">6</span>
+</pre></div>
+</div>
+<p>The temporary scope that is created by a let (or a function) is called an <em>environment</em>.
+It’s a frame in memory with a series of bindings. Normally, it’s destroyed
+as soon as the let returns: there are no more references to the bindings
+in the let, so the garbage-collector cleans up and deletes the environment.
+But if we return a function that has references to the bindings in the let,
+the environment will live on. This is called a <em>closure</em> in many languages,
+and is the key to much of the power of Scheme and Lisp. You might hear this
+refered to as <strong>“let over lambda”</strong>.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; create a function inside a let, returning the function</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">add-42</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">to-add</span> <span class="mi">42</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="nv">to-add</span> <span class="nv">x</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">45</span>
+</pre></div>
+</div>
+<p>In the above example, the lambda function has a reference to the temporary
+variable “to-add”, and uses it in the body of the function. The function
+is returned from the let (it’s the last expression in the let) and bound
+to the name “add-42” in the define. Because we are holding on to the
+reference to the function, this means the environment lives
+on after the let is finished.  The “to-add” variable
+in the lambda is the let’s variable, it’s the variable that existed in scope
+<em>when the lambda executed</em>. This is called <strong>lexical scope</strong>.</p>
+<p>Here’s an example demonstrating that the scope of <strong>to-add</strong> in the let
+is separate from global scope:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a global var, to-add</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">to-add</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1">; create a function inside a let, with its own to-add variable</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">add-42</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">to-add</span> <span class="mi">42</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="nv">to-add</span> <span class="nv">x</span><span class="p">))))</span>
+
+<span class="c1">; calling add 42 here at global scope level still uses the inner version</span>
+<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">45</span>
+<span class="p">(</span><span class="k">set! </span><span class="nv">to-add</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">45</span>
+</pre></div>
+</div>
+<p>Nesting functions and lambdas is a way to make <em>objects as functions</em>.
+These are functions that have some private state. The equivalence of lets
+and lambdas means we can intermix them freely and we have a lot of flexibility
+in how we implement function objects. Let’s make a function
+that counts how many times it has been called:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a counter variable in a let</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">counter-fun</span>
+  <span class="c1">; count is a variable private to this function</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">count</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="c1">; the lambda gets returned from the let and bound to counter-fun</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
+      <span class="c1">; mutate our private variable and post</span>
+      <span class="p">(</span><span class="k">set! </span><span class="nv">count</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">count</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Call&quot;</span> <span class="nv">count</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nf">counter-fun</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">Call</span> <span class="mi">1</span>
+<span class="p">(</span><span class="nf">counter-fun</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">Call</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>The <strong>count</strong> variable is private to counter-fun. We
+have no other way of accessing it.</p>
+<p>We can also accomplish something similar with nested functions.
+We could make this more sophisticated by allowing us
+to specify an increment value for each count. We’ll have
+a builder function make our counter:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function that builds a counter function</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">build-counter</span> <span class="nv">increment</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">count</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
+      <span class="p">(</span><span class="k">set! </span><span class="nv">count</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">increment</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Count is now:&quot;</span> <span class="nv">count</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">counter</span> <span class="p">(</span><span class="nf">build-counter</span> <span class="mi">2</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">counter</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">Count</span> <span class="nv">is</span> <span class="nv">now:</span> <span class="mi">2</span>
+<span class="p">(</span><span class="nf">counter</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">Count</span> <span class="nv">is</span> <span class="nv">now:</span> <span class="mi">4</span>
+</pre></div>
+</div>
+<p>Finally, here is an example of the same pattern where
+the function returned by the lambda, also itself returns a
+value based on the private variable:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function that builds another function and tracks calls</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">build-adder</span> <span class="nv">to-add</span><span class="p">)</span>
+  <span class="c1">; a local variable storing number of times we are called</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">times-called</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="c1">; a lambda to return the function-object</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
+      <span class="c1">; update the local variable and post to the console</span>
+      <span class="p">(</span><span class="k">set! </span><span class="nv">times-called</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">times-called</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I have done&quot;</span> <span class="nv">times-called</span> <span class="s">&quot;additions!&quot;</span><span class="p">)</span>
+      <span class="c1">; return the results of our addition</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="nv">x</span> <span class="nv">to-add</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">add-3</span> <span class="p">(</span><span class="nf">build-adder</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">add-3</span> <span class="mi">10</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="s">&quot;I have done 1 additions!&quot;</span>
+<span class="nv">s4m&gt;</span> <span class="mi">13</span>
+
+<span class="p">(</span><span class="nf">add-3</span> <span class="mi">12</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="s">&quot;I have done 2 additions!&quot;</span>
+<span class="nv">s4m&gt;</span> <span class="mi">15</span>
+</pre></div>
+</div>
+<p>Note in the above that we did not need to explicitly
+use <strong>to-add</strong> in the bindings of our let. Because lets and
+lambdas are equivalent in scope creation, the to-add variable
+and the times-called variable will both be persisted in the
+environment that the lambda function brings back with itself.
+In a future section, we will look at how these patterns can be
+used to make sophisticated and flexible object oriented systems.</p>
+</div>
+<div class="section" id="looping-todo">
+<h2>Looping - (TODO)<a class="headerlink" href="#looping-todo" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Learn Scheme For Max and S74 Scheme</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Part 1 - Scheme Basics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-syntax">Basic syntax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#output-in-scheme-for-max">Output in Scheme For Max</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-types">Basic types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#lists-an-introduction">Lists - an introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluation-and-quoting">Evaluation and quoting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#keywords">Keywords</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#lists-in-more-depth">Lists, in more depth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optional-function-arguments">Optional function arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vectors">Vectors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hash-tables">Hash-Tables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#branching-with-if">Branching with if</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grouping-statements-with-begin">Grouping statements with begin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing-equality">Testing equality</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logical-operators-and-or-not">Logical operators: and, or, not</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#branching-with-cond">Branching with cond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scope-and-the-let-statement">Scope and the let statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#looping-todo">Looping - (TODO)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="getting_started.html" title="previous chapter">Getting Started</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Iain CT Duncan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/part_1.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

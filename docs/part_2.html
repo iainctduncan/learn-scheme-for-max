@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Part 2 - Intermediate Lisp &#8212; Learn Scheme For Max and S74 Scheme 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Part 1 - Scheme Basics" href="part_1.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="part-2-intermediate-lisp">
+<h1>Part 2 - Intermediate Lisp<a class="headerlink" href="#part-2-intermediate-lisp" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="environments-and-closures">
+<h2>Environments and Closures<a class="headerlink" href="#environments-and-closures" title="Permalink to this headline">¶</a></h2>
+<p>The temporary scope that is created by a let (or a function) is called an <em>environment</em>.
+It’s a frame in memory with a series of bindings. Normally, it’s destroyed
+as soon as the let returns: there are no more references to the bindings
+in the let, so the garbage-collector cleans up and deletes the environment.
+But if we return a function that has references to the bindings in the let,
+the environment will live on. This is called a <em>closure</em> in many languages,
+and is the key to much of the power of Scheme and Lisp. You might hear this
+refered to as <strong>“let over lambda”</strong>.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; create a function inside a let, returning the function</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">add-42</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">to-add</span> <span class="mi">42</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="nv">to-add</span> <span class="nv">x</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">45</span>
+</pre></div>
+</div>
+<p>In the above example, the lambda function has a reference to the temporary
+variable “to-add”, and uses it in the body of the function. The function
+is returned from the let (it’s the last expression in the let) and bound
+to the name “add-42” in the define. Because we are holding on to the
+reference to the function, this means the environment lives
+on after the let is finished.  The “to-add” variable
+in the lambda is the let’s variable, it’s the variable that existed in scope
+<em>when the lambda executed</em>. This is called <strong>lexical scope</strong>.</p>
+<p>Here’s an example demonstrating that the scope of <strong>to-add</strong> in the let
+is separate from global scope:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a global var, to-add</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">to-add</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1">; create a function inside a let, with its own to-add variable</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">add-42</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">to-add</span> <span class="mi">42</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="nv">to-add</span> <span class="nv">x</span><span class="p">))))</span>
+
+<span class="c1">; calling add 42 here at global scope level still uses the inner version</span>
+<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">45</span>
+<span class="p">(</span><span class="k">set! </span><span class="nv">to-add</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">45</span>
+</pre></div>
+</div>
+<p>Nesting functions and lambdas is a way to make <em>objects as functions</em>.
+These are functions that have some private state. The equivalence of lets
+and lambdas means we can intermix them freely and we have a lot of flexibility
+in how we implement function objects. Let’s make a function
+that counts how many times it has been called:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a counter variable in a let</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">counter-fun</span>
+  <span class="c1">; count is a variable private to this function</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">count</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="c1">; the lambda gets returned from the let and bound to counter-fun</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
+      <span class="c1">; mutate our private variable and post</span>
+      <span class="p">(</span><span class="k">set! </span><span class="nv">count</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">count</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Call&quot;</span> <span class="nv">count</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nf">counter-fun</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">Call</span> <span class="mi">1</span>
+<span class="p">(</span><span class="nf">counter-fun</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">Call</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>The <strong>count</strong> variable is private to counter-fun. We
+have no other way of accessing it.</p>
+<p>We can also accomplish something similar with nested functions.
+We could make this more sophisticated by allowing us
+to specify an increment value for each count. We’ll have
+a builder function make our counter:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function that builds a counter function</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">build-counter</span> <span class="nv">increment</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">count</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
+      <span class="p">(</span><span class="k">set! </span><span class="nv">count</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">increment</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Count is now:&quot;</span> <span class="nv">count</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">counter</span> <span class="p">(</span><span class="nf">build-counter</span> <span class="mi">2</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">counter</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">Count</span> <span class="nv">is</span> <span class="nv">now:</span> <span class="mi">2</span>
+<span class="p">(</span><span class="nf">counter</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">Count</span> <span class="nv">is</span> <span class="nv">now:</span> <span class="mi">4</span>
+</pre></div>
+</div>
+<p>Finally, here is an example of the same pattern where
+the function returned by the lambda, also itself returns a
+value based on the private variable:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function that builds another function and tracks calls</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">build-adder</span> <span class="nv">to-add</span><span class="p">)</span>
+  <span class="c1">; a local variable storing number of times we are called</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">times-called</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="c1">; a lambda to return the function-object</span>
+    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
+      <span class="c1">; update the local variable and post to the console</span>
+      <span class="p">(</span><span class="k">set! </span><span class="nv">times-called</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">times-called</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I have done&quot;</span> <span class="nv">times-called</span> <span class="s">&quot;additions!&quot;</span><span class="p">)</span>
+      <span class="c1">; return the results of our addition</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="nv">x</span> <span class="nv">to-add</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="k">define </span><span class="nv">add-3</span> <span class="p">(</span><span class="nf">build-adder</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">add-3</span> <span class="mi">10</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="s">&quot;I have done 1 additions!&quot;</span>
+<span class="nv">s4m&gt;</span> <span class="mi">13</span>
+
+<span class="p">(</span><span class="nf">add-3</span> <span class="mi">12</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="s">&quot;I have done 2 additions!&quot;</span>
+<span class="nv">s4m&gt;</span> <span class="mi">15</span>
+</pre></div>
+</div>
+<p>Note in the above that we did not need to explicitly
+use <strong>to-add</strong> in the bindings of our let. Because lets and
+lambdas are equivalent in scope creation, the to-add variable
+and the times-called variable will both be persisted in the
+environment that the lambda function brings back with itself.
+In a future section, we will look at how these patterns can be
+used to make sophisticated and flexible object oriented systems.</p>
+</div>
+<div class="section" id="looping-todo">
+<h2>Looping - (TODO)<a class="headerlink" href="#looping-todo" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Learn Scheme For Max and S74 Scheme</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="part_1.html">Part 1 - Scheme Basics</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Part 2 - Intermediate Lisp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#environments-and-closures">Environments and Closures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#looping-todo">Looping - (TODO)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="part_1.html" title="previous chapter">Part 1 - Scheme Basics</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Iain CT Duncan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/part_2.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
