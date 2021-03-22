@@ -1,8 +1,5 @@
-Learn Scheme For Max and S74 Scheme (a work in progress)
-========================================================
-
 Introduction
-------------
+================================================================================
 
 The purpose of this e-book is to help new users of Scheme For Max (S4M),
 get up and running as quickly as possible, making useful things in Max as they go.
@@ -24,17 +21,15 @@ using s7 and s74, my thin convenience layer on top of s7.  Following this
 book (or in parallel) you'll be better equipped to take advantage of the many free 
 resources for learning Scheme in depth. 
 
-My Approach
------------
 Scheme is minimal, with almost no syntax, and a very small number of special forms. 
 However, to write idiomatic Scheme and take advantage of the language, we need to 
 understand how the language and intepreter work in a way that other languages don't require until an advanced level.
-As a result, many Scheme resources are pretty heavy on lanugage concepts up front.
-The approach I'm going to take is a bit different. I'll teach you the fundamental
+As a result, many Scheme resources are pretty heavy on language concepts up front.
+The approach I'm going to take is a bit different. In Part 1, I'll teach you the fundamental
 building blocks of Scheme, but will skim pretty lightly over the theory. 
 I want you to get making things in Max right away.
-We will cover making variables and functions, looping constructs, managing definitions and scope,
-and simple cases of code-as-data/data-as-code. And we'll use Scheme for Max examples 
+We will cover making variables and functions, basic and compound types, branching and looping, 
+managing definitions and scope, and simple cases of code-as-data/data-as-code. And we'll use Scheme for Max examples 
 that you can play with right away in Max.
 
 Once you've gotten up and running, and experienced the power of the language first hand,
@@ -42,15 +37,19 @@ you can go over the basics again in a more theory-heavy book to really understan
 the Lisp paradigm. I recommend the book "Simply Scheme", 
 which is available free online. It's a great introduction to Scheme and computer science, and
 has examples that will almost all run on Scheme For Max, or in the Dr Racket 
-IDE. There is a Scheme For Max cookbook recipe on how to use Simply Scheme with S4M,
-and a page on the S4M documentation about other Scheme learning resources. 
-There is also a page here and in the main documentation listing other great resources,
-many of which are free online.
+IDE. 
 
-Finally, I am publishing this free as it develops. So initial drafts will be a bit rough
-and move pretty quickly, but will be fleshed out over time. I want to get material
+.. TODO
+  There is a Scheme For Max cookbook recipe on how to use Simply Scheme with S4M,
+  and a page on the S4M documentation about other Scheme learning resources. 
+  There is also a page here and in the main documentation listing other great resources,
+  many of which are free online.
+
+Finally, I am publishing this free, as it evolves. So initial drafts will be a bit rough
+and move pretty quickly, but will be improved and expanded as we go. I want to get material
 into the hands of users as soon as I can, and will improve it later based on feedback.
-Please feel free to submit questions or requests for clarification in the Github issues.
+Please feel free to submit questions or requests for clarification in the GitHub issue tracker
+for the Learn Scheme For Max repository.
 
 Enjoy and happy Scheming!
 

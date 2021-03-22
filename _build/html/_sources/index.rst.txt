@@ -3,12 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Learn Scheme For Max & S74 Scheme
-======================================
+Learn Scheme For Max 
+====================
 
 .. toctree::
     :maxdepth: 2
-    :caption: Contents:
 
     introduction
+    getting_started
     part_1
+    part_2

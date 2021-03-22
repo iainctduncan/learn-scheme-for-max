@@ -1,12 +1,15 @@
 Notes on the book
 
 To cover:
-- basic types section
+- DONE basic types section
+- DONE lists, pairs, quoting, eval
+- DONE hash-tables
+- DONE function arities, optional args etc
+- DONE logical operators (and, or, not)
+- DONE function keyword and default args
+- DONE vectors - but not subvectors
+
 - looping: named let, for-each, map, do
-- lists, pairs, quoting, eval
-- vectors and hash-tables
+- recursion
 
-- move closures into part 2, advanced scheme
 
-- I think the intro to quoting should happen right after variables
-  so we can show quoted symbols and keywords

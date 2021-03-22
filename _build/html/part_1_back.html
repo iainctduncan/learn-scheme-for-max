@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Part 1 - Scheme Basics &#8212; Learn Scheme For Max and S74 Scheme 0.1 documentation</title>
+    <title>A Scheme Crash Course &#8212; Learn Scheme For Max and S74 Scheme 0.1 documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -14,7 +14,6 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Getting Started" href="getting_started.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -31,15 +30,69 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="part-1-scheme-basics">
-<h1>Part 1 - Scheme Basics<a class="headerlink" href="#part-1-scheme-basics" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="a-scheme-crash-course">
+<h1>A Scheme Crash Course<a class="headerlink" href="#a-scheme-crash-course" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="setting-up">
+<h2>Setting Up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h2>
+<p>To run these examples, you should be at a Scheme For Max interpreter. I recommend opening
+Max and having both a file editor and the built in s4m.repl bpatcher open, with
+the Max console in view. You’ll want to be able to send lines of code to the
+interpreter and see the results in the console.  If you haven’t already, I recommend watching the tutorial videos
+on the “Music With Lisp” youtube channel on installation and first steps. These
+will get you up and running, so that you are sending code to your s4m object and
+seeing the results in the Max console. To send code from your editor
+to s4m, check out the s4m cookbook example on editor integration. If you plan on using
+S4M extensively, it’s well  worth getting
+this going as it will make working a lot more pleasant. But you can certainly
+get started just using the <strong>s4m.repl</strong> bpatcher too.</p>
+<p>In the code sections in this tutorial, I show code as we send it to the intepreter and the
+results back from the interpreter. Lines that start with a semi-colon are comments
+and don’t get run by the interpreter. Lines with no prefixing are expressions
+we send to s4m, whether from the built in text editor bpatcher or
+from our editor over a network connection. (Or sent to the interpreter some other way, perhaps from
+a Max message - see the Scheme For Max documentation if you’re not clear
+how to do this). Let’s quickly make sure we’re clear on this:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; a comment, you can skip typing this in</span>
+
+<span class="c1">;; an expression we send to s4m, it has no prefix</span>
+<span class="c1">;; and its return value from the interpreter</span>
+<span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>Some Scheme expressions have side effects. For example, the
+<strong>post</strong> function takes any number of arguments and logs them
+as strings to the Max console.
+Console output starts with <strong>s4m:</strong> (note the colon)</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; an expression asking the intepreter to log to the console</span>
+<span class="p">(</span><span class="nf">post</span> <span class="s">&quot;testing&quot;</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">testing</span> <span class="mi">1</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>If you have set the s4m attribute <strong>log-null</strong> to true (you can use
+the checkbox in the inspector), the console will also log the return
+values from any functions that return the <strong>null list</strong>. Normally when
+we work in Scheme For Max, we won’t want to do this, so the default
+setting is for null values to be hidden from the console, but for the purpose
+of this tutorial, I recommend turning log-null on so you have a visual indication
+of the returned value. The post function is called only for its side effect
+(logging), so it returns the null list.  With log-null on, a call to post
+will thus show:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; post prints output, and returns the null list ()</span>
+<span class="p">(</span><span class="nf">post</span> <span class="s">&quot;hello-world&quot;</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">hello-world</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>If you are able to successfully duplicate the above, we’re ready to begin.</p>
+</div>
 <div class="section" id="basic-syntax">
-<h2>Basic syntax<a class="headerlink" href="#basic-syntax" title="Permalink to this headline">¶</a></h2>
+<h2>Basic Syntax<a class="headerlink" href="#basic-syntax" title="Permalink to this headline">¶</a></h2>
 <p>Scheme syntax is very simple: everything in the language is done with <strong>s-expressions</strong>.
-(<strong>sexp’s</strong> for short.) A simple s-expression is either one <strong>atom</strong> (such as a symbol, number, string),
+(<strong>sexprs</strong> for short.) A simple s-expression is either one <strong>atom</strong> (such as a symbol, number, string),
 or a series of atoms surrounded by parentheses. S-expressions can be nested to any depth
-we want.</p>
-<p>When we send an sexp to the interpreter to be <strong>evaluated</strong>, the interpreter evaluates
+we want.
+When we send an sexpr to the interpreter to be <strong>evaluated</strong>, the interpreter evaluates
 all nested expressions, from the inside out, ending with evaluation of the outer sexpr.
 Evaluation of a parenthetical s-expr is done by calling the first atom as a function,
 with the remaining atoms passed as <strong>parameters</strong>, also called <strong>arguments</strong>. (In strict computer science
@@ -200,8 +253,8 @@ it’s exactly the same.</p>
 <p>Some texts only use the lambda form as it is more explicit, and thus clear what is going on. We
 will use both as space can be at a premium in a Max patch!</p>
 </div>
-<div class="section" id="output-in-scheme-for-max">
-<h2>Output in Scheme For Max<a class="headerlink" href="#output-in-scheme-for-max" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="side-trip-output-in-scheme-for-max">
+<h2>Side-trip: Output in Scheme For Max<a class="headerlink" href="#side-trip-output-in-scheme-for-max" title="Permalink to this headline">¶</a></h2>
 <p>In Scheme for Max, we have two functions we will use all the time for output, <strong>out</strong> and <strong>post</strong>.
 <strong>out</strong> is used to send values out the s4m object’s outlets. It takes two arguments, the
 outlet number, and the value to be sent out. In Scheme For Max, we call the first outlet “outlet 0”.</p>
@@ -257,7 +310,7 @@ all the output in your Max console while you work.</p>
 </div>
 </div>
 <div class="section" id="basic-types">
-<h2>Basic types<a class="headerlink" href="#basic-types" title="Permalink to this headline">¶</a></h2>
+<h2>Basic Types<a class="headerlink" href="#basic-types" title="Permalink to this headline">¶</a></h2>
 <p>Scheme is dynamically typed, meaning that we do not have to specify in advance of what type
 a variable will be, but variables do have types.</p>
 <div class="section" id="booleans-and-predicates">
@@ -386,25 +439,18 @@ there are some helpers in the form of <strong>floor</strong>, <strong>ceiling</s
 <div class="section" id="symbols">
 <h3>Symbols<a class="headerlink" href="#symbols" title="Permalink to this headline">¶</a></h3>
 <p>Symbols are identifiers in Scheme that can be used as the name for
-functions and variables. They can hold more characters than in most
+functions and variables. They can hold many more characters than in most
 languages, because Lisps only use whitespace and parentheses for syntax.
-In Scheme, it’s common to include hyphens, exclamation marks, and
+In Scheme, it’s very common to included hyphens, exclamation marks, and
 questions marks in names.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; symbols for predicates usually end in question marks</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">is-one?</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="nv">x</span><span class="p">)))</span>
 </pre></div>
 </div>
-<p>Evaluating a symbol returns the value stored at that symbol:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">answer</span> <span class="mi">42</span><span class="p">)</span>
-<span class="nv">sm4&gt;</span> <span class="mi">42</span>
-
-<span class="nv">answer</span>
-<span class="nv">s4m&gt;</span> <span class="mi">42</span>
-</pre></div>
-</div>
+<p>Evaluating a symbol returns the value stored at that symbol</p>
 </div>
 <div class="section" id="strings-and-characters">
-<h3>Strings and characters<a class="headerlink" href="#strings-and-characters" title="Permalink to this headline">¶</a></h3>
+<h3>Strings and Characters<a class="headerlink" href="#strings-and-characters" title="Permalink to this headline">¶</a></h3>
 <p>Scheme also has a string type and a character type. Now strictly speaking, Max doesn’t really
 do strings - to Max they are just symbols with quotation marks.
 So we won’t discuss either of these in much detail, especially
@@ -458,13 +504,13 @@ Some of the more useful ones are:</p>
 </pre></div>
 </div>
 <p>There are also functions for extracting characters from strings and building
-up strings, but I don’t find myself using these much in Max, so we’ll leave
-this to the reader to explore online. That’s all we’ll say about strings in
+up strings, but one needs them very infrequently working in Max, so we leave
+this to the reader to explore online. That’s all we will say about strings in
 this crash course.</p>
 </div>
 </div>
-<div class="section" id="lists-an-introduction">
-<h2>Lists - an introduction<a class="headerlink" href="#lists-an-introduction" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="lists-a-brief-introduction">
+<h2>Lists - a brief introduction<a class="headerlink" href="#lists-a-brief-introduction" title="Permalink to this headline">¶</a></h2>
 <p>Lists are the most important compound data type in Lisps, including Scheme.
 So much so that Lisp originally stood for “List Processing”! We’ll be
 looking at lists in detail later, but right now we have a bit of a
@@ -519,11 +565,11 @@ those soon.</p>
 <p>The astute reader will have noticed that the <em>printed representation</em>
 we get back when evaluating a variable that holds a list (or a call
 to the list function), looks an awful lot like an s-expression. In
-the above example, it looks just like a call to a function called “100”.
+the above example, looks just like a call to a function called “100”.
 Hold that thought, it’s going to become very important!</p>
 </div>
 <div class="section" id="evaluation-and-quoting">
-<h2>Evaluation and quoting<a class="headerlink" href="#evaluation-and-quoting" title="Permalink to this headline">¶</a></h2>
+<h2>Evaluation and Quoting<a class="headerlink" href="#evaluation-and-quoting" title="Permalink to this headline">¶</a></h2>
 <p>At this point, we are able to make variables and functions, and we know about
 basic types and lists. It’s time for our first look at what make the Lisp family
 of languages unusual.</p>
@@ -551,8 +597,7 @@ returns the same value:</p>
 </div>
 <p>However, when we evaluate a <strong>symbol</strong>, the evaluation process returns that which
 the symbol <em>points to</em>. Which of course requires that either this symbol is
-either <em>bound</em> in the language, or that we have by bound it ourselves by
-defining using the symbol.
+defined in the language, or that we have defined it ourselves.
 The value pointed to could be an atomic data item, in the case of a variable,
 or a function, in the case of a function name:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">my-var</span> <span class="mi">99</span><span class="p">)</span>
@@ -731,25 +776,24 @@ won’t change anything.</p>
 <div class="section" id="lists-in-more-depth">
 <h2>Lists, in more depth<a class="headerlink" href="#lists-in-more-depth" title="Permalink to this headline">¶</a></h2>
 <p>As we previously discussed, under the hood, Lips lists are <em>linked-lists</em>.
-In the computer memory, every cell in a list includes
+In the computer’s memory, every cell in a list includes
 a value, and a pointer to the next item. The last item in a list has a pointer
 to a hidden cell that holds the <strong>null list</strong>. So if we look at a list of three
 elements, <strong>‘(1 2 3)</strong>, there are three cells with numbers and pointers, and
-one hidden cell with the null list, to which the third cell’s pointer points. Or
+one hidden cell with the null list. The third cell’s pointer points there. Or
 another way of thinking of it is that there are three cells, the last of which
-points to the null list, which is a special case.</p>
-<p>In this section we will look briefly at the classical Lisp list functions.
-I will admit these Lisp list functions have bizarre names: <strong>car</strong>, <strong>cdr</strong>, <strong>cons</strong>, etc.
+points to the null list, which is magical and gets special rules.</p>
+<p>Ok, I admit, Lisp list functions are weird, with names like <strong>car</strong>, <strong>cdr</strong>, and <strong>cons</strong>.
 While these names seem annoying at first, they have stuck around
 as they are easy to type, and will become second nature pretty quickly.
-(They originally come from operating instruction names on very old IBM computers!)</p>
-<p>We can get the first item of a list using the <strong>car</strong> function, and
-we can get the <em>rest</em> of the list, by using the <strong>cdr</strong> function. We can think of
-the combination of car and cdr as taking off the head of the list, which leaves us
-with one single item (the car) and the remaining linked list (the cdr). Thus cdr,
-if called on a proper list, always returns a list. Though the list it returns
-could be the null list, if the head was the last proper item.
-An example is worth a thousand words here:</p>
+They come from operating instruction names on very old IBM computers.</p>
+<p>We can get the first item of a list using the <strong>car</strong> function.
+We can get the <em>rest</em> of the list, by using the <strong>cdr</strong> function, which
+always returns a list. (Well, not <em>always-always</em>, but for now let’s say always:
+if used on a <em>proper-list</em>, cdr always returns a list). cdr returns a list
+because if we start at item 2 in our liked list, having chopped off item 1 (the head),
+the chain of links will still work to the end of the list. An example is worth
+a thousand words here:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a list</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">l</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
@@ -778,42 +822,21 @@ is like chopping off the head twice - and we still get a list:</p>
 <span class="c1">; which can be checked with the null? predicate</span>
 <span class="p">(</span><span class="nb">null? </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">l</span><span class="p">))))</span>
 <span class="nv">s4m&gt;</span> <span class="no">#t</span>
-
-<span class="c1">; but is also still a list!</span>
-<span class="p">(</span><span class="nb">list? </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">cdr </span><span class="nv">l</span><span class="p">))))</span>
-<span class="nv">s4m&gt;</span> <span class="no">#t</span>
 </pre></div>
 </div>
-<p>So it’s important to remember that a proper list is a set of value/pointer entries, where
+<p>So remember, a proper list is a set of value/pointer entries, where
 the last one points to the null list. The value-pointer pairs
-have a special name: <strong>cons cells</strong>.</p>
+have a special name, they are called <strong>cons cells</strong>.</p>
 <p>In addition to making lists with the list function, we can use the <strong>cons</strong> function.
 The list function does the magic for us, while <strong>cons</strong> involves us in the
-underlying linked-list. We use cons to add a new cons cell by passing in
-an item, and a list that our new cell should link to.</p>
+underlying linked-list. We use cons to add a new cons cell
+to the <em>head</em> of a list.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; extend our list at the front</span>
 <span class="p">(</span><span class="nb">cons </span><span class="mi">0</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Note that cons <em>makes a new list</em>. This is an important distinction. Making
-a new list by adding a cell to the head doesn’t change an old list starting
-at a different head:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">list-a</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-
-<span class="p">(</span><span class="k">define </span><span class="nv">list-b</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">0</span> <span class="nv">list-a</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-
-<span class="nv">list-a</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-
-<span class="nv">list-b</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>In the above example, the cdr of list-b <em>is</em> list-a.</p>
-<p>To make a list from scratch with cons, we must backwards, starting
+<p>To make a list from scratch with cons, we would work backwards, starting
 with the null list. And we make the null list by quoting the printed representation
 of an empty list, <strong>‘()</strong>.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">null? </span><span class="o">&#39;</span><span class="p">())</span>
@@ -823,17 +846,15 @@ of an empty list, <strong>‘()</strong>.</p>
 <span class="p">(</span><span class="nb">cons </span><span class="mi">3</span> <span class="o">&#39;</span><span class="p">())</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 
-<span class="c1">; make a list by cons&#39;ing 3 times</span>
+<span class="c1">; make a list, in a cumbersome way</span>
 <span class="p">(</span><span class="nb">cons </span><span class="mi">1</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">2</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">3</span> <span class="o">&#39;</span><span class="p">())))</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>If we want to add to the end of a list, we need to use the <strong>append</strong> function,
-which takes multiple lists as arguments returns a new list consisting
-of the joined argument lists. This means that, unlike
-cons, the item to be added needs to itself be a list. Like cons,
-the result is a new list, and the original lists are unchanged.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a list, by joining two lists</span>
+which takes multiple lists as arguments and joins them. This means that, unlike
+cons, the item to be added needs to be a list:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; join two lists</span>
 <span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span>
 
@@ -843,10 +864,6 @@ the result is a new list, and the original lists are unchanged.</p>
 
 <span class="p">(</span><span class="nb">append </span><span class="nv">l</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
-
-<span class="c1">; note that l is unchanged!</span>
-<span class="nv">l</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
 
 <span class="c1">; or with quote</span>
 <span class="p">(</span><span class="nb">append </span><span class="nv">l</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
@@ -859,15 +876,15 @@ the result is a new list, and the original lists are unchanged.</p>
 </pre></div>
 </div>
 <p>Note that if you call append with a final element that is <em>not</em> a list,
-you won’t get an error… but you also won’t get a proper list. This is
-because the final item is an atomic value instead of a value/pointer pair.</p>
+you won’t get an error.. but you also won’t get a proper list. This is
+because the final item is a simple value and not a value/pointer pair.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The dot before 4 indicates that the list stopped being a proper list
-at the third item. Improper lists are used in various places, but most typically
-as pairs, also called <em>dotted pairs</em>. We get them when we use cons, <em>without</em> ending our chain
+at the third item. Improper lists are used in various places, but typically
+only as pairs, also called <em>dotted pairs</em>. We get them when we use cons, <em>without</em> ending our chain
 with the null list:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; consing to an atomic value produces a dotted pair</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">my-pair</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span>
@@ -891,213 +908,8 @@ This means we can use car and cdr, but there is no cdr of the second element.</p
 <span class="nv">s4m&gt;</span> <span class="nv">Error:</span> <span class="nv">cdr</span> <span class="nv">argument</span> <span class="mi">2</span> <span class="nv">is</span> <span class="nv">an</span> <span class="nv">integer,</span> <span class="nv">but</span> <span class="nv">should</span> <span class="nv">be</span> <span class="nv">a</span> <span class="nv">pair</span><span class="o">.</span>
 </pre></div>
 </div>
-<p>Dotted-pairs and improper lists are important to understand as you’ll
-use them when looping through data structures such as association
-lists and hash-tables, both of which have pairs of key and value.</p>
-<div class="section" id="list-accessor-shortcuts">
-<h3>List accessor shortcuts<a class="headerlink" href="#list-accessor-shortcuts" title="Permalink to this headline">¶</a></h3>
-<p>Finally, and these gets almost silly but are convenient, there
-are shortcuts for combinations of car and cdr that are useful
-when working with nested lists. These can always be replaced
-by nested combinations of car and cdr, so you don’t need to know
-them. But you are quite likely to see them in other lisp code,
-so it’s worth knowing they exist, and they can make some code more
-readable (or at least, to someone who knows these oddball functions!).</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; car of nested list</span>
-<span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span>
-
-<span class="c1">; cdr of nested list</span>
-<span class="p">(</span><span class="nb">cdr </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
-<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">4</span> <span class="mi">5</span><span class="p">))</span>
-
-<span class="c1">; caar gets the car of the car</span>
-<span class="p">(</span><span class="nb">caar </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
-<span class="nv">s4m&gt;</span> <span class="mi">0</span>
-
-<span class="c1">; cdar gets the cdr, of the car - which is a list</span>
-<span class="p">(</span><span class="nb">cdar </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="c1">; cadr gets the car, of the cdr</span>
-<span class="c1">; aka the first item of the cdr of the outer list</span>
-<span class="p">(</span><span class="nb">cadr </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-
-<span class="c1">; cddr gets the cdr of the cdr, which is a list of lists</span>
-<span class="p">(</span><span class="nb">cddr </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
-<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="mi">4</span> <span class="mi">5</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>This continues on to 5 letter combinations, like <em>cadar</em>, and
-honestly, you don’t need to know these. But as you may well encounter
-code with functions consisting of strings of c,a,d, and r, know
-you’ll know what you’re seeing.</p>
-</div>
-</div>
-<div class="section" id="optional-function-arguments">
-<h2>Optional function arguments<a class="headerlink" href="#optional-function-arguments" title="Permalink to this headline">¶</a></h2>
-<p>Know that we know about lists, we can use them for creating functions
-that can be called with a variable number of arguments. (Also known as “multi-arity
-functions” if you want to talk fancy computer science lingo!)
-This is done by using dotted notation in the function argument, which will
-put any arguments past the explicitly named arguments into a list. This list will be
-the null list if no additional arguments are given:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; one mandatory argument x, and 0 or more optionals</span>
-<span class="c1">; the list &#39;args&#39;</span>
-<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun</span> <span class="nv">x</span> <span class="o">.</span> <span class="nv">args</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;called with&quot;</span> <span class="p">(</span><span class="nb">length </span><span class="nv">args</span><span class="p">)</span> <span class="s">&quot;optional args&quot;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;optional args:&quot;</span> <span class="nv">args</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="nv">my-fun</span>
-
-<span class="p">(</span><span class="nf">my-fun</span> <span class="mi">1</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="nv">called</span> <span class="nv">with</span> <span class="mi">0</span> <span class="nv">optional</span> <span class="nv">args</span>
-<span class="nv">s4m:</span> <span class="nv">optional</span> <span class="nv">args:</span> <span class="p">()</span>
-<span class="nv">s4m&gt;</span> <span class="o">&#39;</span><span class="p">()</span>
-
-<span class="p">(</span><span class="nf">my-fun</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="nv">called</span> <span class="nv">with</span> <span class="mi">2</span> <span class="nv">optional</span> <span class="nv">args</span>
-<span class="nv">s4m:</span> <span class="nv">optional</span> <span class="nv">args:</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="o">&#39;</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>This can be done with lambda as well, but lambda has an additional option.
-If the argument list for a lambda is only one symbol, this symbol will be
-bound to a list of all the arguments.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a lambda that bundles all its args into a list</span>
-<span class="p">(</span><span class="k">define </span><span class="nv">my-lambda</span> <span class="p">(</span><span class="k">lambda </span><span class="nv">args</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;args:&quot;</span> <span class="nv">args</span><span class="p">)))</span>
-<span class="nv">s4m&gt;</span> <span class="nv">my-lambda</span>
-
-<span class="p">(</span><span class="nf">my-lambda</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="nv">args:</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="o">&#39;</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>s7 Scheme borrows heavily from Common Lisp, and includes two non-standard special forms,
-<strong>define*</strong> and <strong>lambda*</strong>, that give us the ability to use <em>keyword arguments</em> with
-default values in our function definitions. We do this by using lists of key and default
-value in place of arguments. To call the function with a keyword argument, we pass in a
-keyword and a value pair for that argument. This is most easily explained with the example
-below, taken straight from the s7 documentation:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function with one required argument, a, and two optional</span>
-<span class="c1">; keyword args, b &amp; c, with default values of 32 and &quot;hi&quot;</span>
-<span class="p">(</span><span class="nf">define*</span> <span class="p">(</span><span class="nf">hi</span> <span class="nv">a</span> <span class="p">(</span><span class="nf">b</span> <span class="mi">32</span><span class="p">)</span> <span class="p">(</span><span class="nf">c</span> <span class="s">&quot;hi&quot;</span><span class="p">))</span>
-  <span class="c1">; returns a list of the arguments</span>
-  <span class="p">(</span><span class="nb">list </span><span class="nv">a</span> <span class="nv">b</span> <span class="nv">c</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="nv">hi</span>
-
-<span class="c1">; call hi with only one argument and we get the defaults</span>
-<span class="p">(</span><span class="nf">hi</span> <span class="mi">99</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">32</span> <span class="s">&quot;hi&quot;</span><span class="p">)</span>
-
-<span class="c1">; call hi with three arguments, and we use them all</span>
-<span class="p">(</span><span class="nf">hi</span> <span class="mi">99</span> <span class="mi">88</span> <span class="mi">77</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">88</span> <span class="mi">77</span><span class="p">)</span>
-
-<span class="c1">; call hi with one argument and one keyword argument</span>
-<span class="p">(</span><span class="nf">hi</span> <span class="mi">99</span> <span class="nv">:c</span> <span class="mi">77</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">32</span> <span class="mi">77</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="vectors">
-<h2>Vectors<a class="headerlink" href="#vectors" title="Permalink to this headline">¶</a></h2>
-<p>Lists do have some disadvantages. Linked lists need to be traversed to get to their
-contents, which means that accessing elements deep in a long list can be slow. And
-adding items to the end of a list requires copying the entire list with append.
-In music situations, we often need to access anywhere in a sequential data structure,
-or add items at the end of a table, so for these types of cases, a more appropriate type is the <strong>vector</strong>.
-Like lists, vectors can hold any data type, and can hold multiple data types within
-a vector. If we want to model Max data that would be in a buffer
-or table in Max, the vector is likely what we want.</p>
-<p>Note that the printed representation of a vector starts with <strong>#</strong> to differentiate
-it from a list.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; create a vector, containing 1 2 3 4</span>
-<span class="p">(</span><span class="k">define </span><span class="nv">v</span> <span class="p">(</span><span class="nb">vector </span><span class="mi">10</span> <span class="mi">11</span> <span class="mi">12</span> <span class="mi">13</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span><span class="mi">10</span> <span class="mi">11</span> <span class="mi">12</span> <span class="mi">13</span><span class="p">)</span>
-
-<span class="c1">; get its length</span>
-<span class="p">(</span><span class="nb">vector-length </span><span class="nv">v</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">4</span>
-
-<span class="c1">; is it really a vector?</span>
-<span class="p">(</span><span class="nb">vector? </span><span class="nv">v</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="no">#t</span>
-
-<span class="c1">; access an element</span>
-<span class="p">(</span><span class="nb">vector-ref </span><span class="nv">v</span> <span class="mi">2</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">12</span>
-
-<span class="c1">; or with applicative syntax</span>
-<span class="p">(</span><span class="nf">v</span> <span class="mi">0</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">10</span>
-
-<span class="c1">; set with vector-set!</span>
-<span class="p">(</span><span class="nb">vector-set! </span><span class="nv">v</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">99</span>
-
-<span class="nv">v</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">99</span> <span class="mi">11</span> <span class="mi">12</span> <span class="mi">13</span><span class="p">)</span>
-
-<span class="c1">; or with applicative syntax</span>
-<span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">v</span> <span class="mi">0</span><span class="p">)</span> <span class="mi">100</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">100</span>
-
-<span class="c1">; make a vector using quote and the # sign</span>
-<span class="p">(</span><span class="k">define </span><span class="nv">v</span> <span class="o">&#39;#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Note that Max only has a list type for messages, so when we cross the Max to Scheme
-boundary and vice versa, it’s worth thinking about which type is appropriate.
-Vectors can be converted to and from lists easily, and S4M will use vectors instead
-of lists in places where that makes sense. For example, in reading a Max dictionary into
-Scheme, arrays in the dictionary will be converted to vectors instead of Scheme lists.
-And s4m has functions for copying from tables and buffers to vectors, and vice versa.
-We won’t cover those here, but they are detailed in the s4m documentation.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; conversions</span>
-<span class="p">(</span><span class="nb">vector-&gt;list </span><span class="o">&#39;#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-
-<span class="p">(</span><span class="nb">list-&gt;vector </span><span class="o">&#39;</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>We can also make a vectors without specifying first what they will hold with
-<strong>make-vector</strong>:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a 4 point vector</span>
-<span class="p">(</span><span class="nb">make-vector </span><span class="mi">4</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span> <span class="p">)</span>
-
-<span class="c1">; this is more useful if we pass a starting value</span>
-<span class="p">(</span><span class="nb">make-vector </span><span class="mi">4</span> <span class="mi">0</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="p">(</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>s7 supports multi-dimensional vectors. We create these by passing
-a list to make vector where the vector size argument goes. The lists
-specifies the size in as many dimensions as we want.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a 2 x 3 vector, initialized to 0</span>
-<span class="p">(</span><span class="k">define </span><span class="nv">v2x3</span> <span class="p">(</span><span class="nb">make-vector </span><span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="mi">0</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="mi">2</span><span class="nv">d</span><span class="p">((</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">))</span>
-
-<span class="c1">; read from the vector</span>
-<span class="p">(</span><span class="nf">v2x3</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">0</span>
-
-<span class="c1">; set with applicative syntax</span>
-<span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">v2x3</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">99</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">99</span>
-
-<span class="nv">v2x3</span>
-<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="mi">2</span><span class="nv">d</span><span class="p">((</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>s7 has quite a few interesting additional vector functions, especially around
-multi-dimensional vectors, that you can read about on the official s7 page.</p>
-</div>
 <div class="section" id="hash-tables">
-<h2>Hash-Tables<a class="headerlink" href="#hash-tables" title="Permalink to this headline">¶</a></h2>
+<h3>Hash-Tables<a class="headerlink" href="#hash-tables" title="Permalink to this headline">¶</a></h3>
 <p>Hash-tables are key-value stores, similar to dictionaries in Python or JavaScript.
 A key can be anything we’d like, but it’s most common to use a keyword as a key,
 or barring that, a symbol.</p>
@@ -1114,8 +926,8 @@ or barring that, a symbol.</p>
 <span class="nv">s4m&gt;</span> <span class="mi">99</span>
 </pre></div>
 </div>
-<p>Asking for a value that is not in a hash-table returns <strong>#f</strong>, and we can remove
-an item from a hash-table by storing <strong>#f</strong> at the key. We can put a new item
+<p>Asking for a value that is not in a hash-table returns #f, and we can remove
+an item from a hash-table by storing #f at the key. We can put a new item
 in the hash-table by setting it’s value with a key.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; ask for a value not in our hash</span>
 <span class="p">(</span><span class="nf">hash-table-ref</span> <span class="nv">my-hash</span> <span class="nv">:c</span><span class="p">)</span>
@@ -1134,16 +946,16 @@ in the hash-table by setting it’s value with a key.</p>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:c</span> <span class="mi">99</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>As noted earlier, s7 Scheme supports <em>applicative syntax</em> for compound data types,
-and this works for hash-tables too, allowing us to get a value from a hash-table by
-calling the hash-table as a function with the key as an argument</p>
+<p>s7 Scheme supports <em>applicative syntax</em> for compound data types, meaning
+we can use a hash-table variable as a function, and a key as an argument.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get :a, calling my-hash like a function</span>
 <span class="p">(</span><span class="nf">my-hash</span> <span class="nv">:a</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">1</span>
 </pre></div>
 </div>
-<p>As with lists, calling the hash-table with a key gives us a memory location,
-and we can thus also use this with <strong>set!</strong>:</p>
+<p>When we do this, calling the hash-table with a key gives us a memory location,
+and we can thus also use this with
+<strong>set!</strong>:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; set :a, with applicative syntax</span>
 <span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">my-hash</span> <span class="nv">:a</span><span class="p">)</span> <span class="mi">42</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">42</span>
@@ -1191,8 +1003,9 @@ keywords), we can convert hash-tables to Max dictionaries and vice versa, writin
 and reading from Max dictionaries. See the Scheme For Max documentation for details
 on these functions.</p>
 </div>
-<div class="section" id="branching-with-if">
-<h2>Branching with if<a class="headerlink" href="#branching-with-if" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="if-cond-predicates-and-testing-equality">
+<h2>if, cond, predicates, and testing equality<a class="headerlink" href="#if-cond-predicates-and-testing-equality" title="Permalink to this headline">¶</a></h2>
 <p>In Scheme, we typically branch using one of two special forms: <strong>if</strong> and <strong>cond</strong>.
 These are both <em>special forms</em> - they look like function calls but are not
 evaluated the same way as functions. The <strong>if</strong> special form takes
@@ -1220,9 +1033,6 @@ for the clauses <em>only</em> evaluate if that clause is to be returned.</p>
 <span class="nv">s4m&gt;</span> <span class="mi">33</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="grouping-statements-with-begin">
-<h2>Grouping statements with begin<a class="headerlink" href="#grouping-statements-with-begin" title="Permalink to this headline">¶</a></h2>
 <p>So far, if looks just like a function. The fact that it is not a function
 is illustrated if we put side effects in our two clauses. If we want to
 add a side effect to a clause that will return a value, we can enclose
@@ -1282,15 +1092,15 @@ we can use the <strong>null?</strong> predicate.</p>
   <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Var is the null list.&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>We’ve seen some of these already, but some other useful predicates are
-<strong>defined?</strong>, <strong>procedure?</strong>, <strong>symbol?</strong>, <strong>number?</strong>, <strong>list?</strong>, <strong>keyword?</strong>.</p>
+<p>Some other useful predicates are <strong>defined?</strong>, <strong>procedure?</strong>, <strong>symbol?</strong>, <strong>number?</strong>,
+<strong>list?</strong>, <strong>keyword?</strong>.</p>
 <p>It is idiomatic Scheme to name your own predicates similarly.
 Not all Scheme implementations have the same predicates built in,
 so if you look up a predicate online, you probably want to test it
 in the REPL to make sure it’s in S74, or add it to your base file.</p>
 </div>
 <div class="section" id="testing-equality">
-<h2>Testing equality<a class="headerlink" href="#testing-equality" title="Permalink to this headline">¶</a></h2>
+<h2>Testing Equality<a class="headerlink" href="#testing-equality" title="Permalink to this headline">¶</a></h2>
 <p>Testing equality in Scheme is a bit different than you might be used to in other languages
 as well.</p>
 <p>Numeric equality is tested with <strong>=</strong>, but note that we do not have
@@ -1376,62 +1186,8 @@ we will cover in detail later.</p>
 <p>When in doubt, test your equality checks in the repl! But in general,
 numeric equivalence uses <strong>=</strong>, non-numeric and compound type equality uses
 <strong>equal?</strong>, and pointer comparison uses <strong>eq?</strong> and/or <strong>eqv?</strong>.</p>
-</div>
-<div class="section" id="logical-operators-and-or-not">
-<h2>Logical operators: and, or, not<a class="headerlink" href="#logical-operators-and-or-not" title="Permalink to this headline">¶</a></h2>
-<p>Testing complex conditions often requires logical operators, for which Scheme
-provides us <strong>and</strong>, <strong>or</strong>, and <strong>not</strong>.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; and returns true only if all predicates return true</span>
-<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">&gt; </span><span class="mi">2</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt; </span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="no">#t</span>
-
-<span class="c1">; or returns true if any return true</span>
-<span class="p">(</span><span class="k">or </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="no">#t</span>
-
-<span class="c1">; not returns the negation of a boolean</span>
-<span class="p">(</span><span class="nb">not </span><span class="p">(</span><span class="k">or </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)))</span>
-<span class="nv">s4m&gt;</span> <span class="no">#f</span>
-</pre></div>
-</div>
-<p>These are <em>special forms</em>, not regular functions, meaning that evaluation doesn’t
-follow the regular function evaluation rules of evaluating all subexpressions and
-passing the <em>results</em> in as arguments. Rather, these <em>short-circuit</em>. This can
-be useful if we want to evaluate some expressions only if previous expressions
-have returned either true or false.  Remember, in a boolean context, only
-#false is #false!</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; evaluate the second expression only if the first is true</span>
-<span class="c1">; note: the return value is from the last evaluated expression</span>
-<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I ran!&quot;</span><span class="p">))</span>
-<span class="nv">s4m&gt;</span> <span class="no">#f</span>
-</pre></div>
-</div>
-<p>If <strong>and</strong> were a function, we would see our post statement running regardless
-of the result of the first expression, but it only excecutes if all expressions
-return a non-false value:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I ran!&quot;</span><span class="p">))</span>
-<span class="nv">s4m:</span> <span class="nv">I</span> <span class="nv">ran!</span>
-<span class="nv">s4m&gt;</span> <span class="p">()</span>
-
-<span class="c1">; add another non-false expression and it will be the return value</span>
-
-<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I ran!&quot;</span><span class="p">)</span> <span class="mi">42</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="nv">I</span> <span class="nv">ran!</span>
-<span class="nv">s4m&gt;</span> <span class="mi">42</span>
-</pre></div>
-</div>
-<p>This can be used with <strong>or</strong> as well, with expressions evaluating
-until one of them returns true. This can be a convenient way to
-make something happen if a previous something returns false. For
-example, we know that a hash-table returns false if asked for a non-existent
-key, so this can be used to create a fall-back value</p>
-</div>
-<div class="section" id="branching-with-cond">
-<h2>Branching with cond<a class="headerlink" href="#branching-with-cond" title="Permalink to this headline">¶</a></h2>
 <p>The <strong>cond</strong> special form allows us to provide a series of predicate
-and result pairs. Evaluation stops when the first predicate passes. When
-combined with predicates and logical operators, this gives us everything
-we need to implement complex control flow.</p>
+and result pairs. Evaluation stops when the first predicate passes.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; return some numbers for several values of x</span>
 <span class="p">(</span><span class="nf">cond</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">))</span>
@@ -1781,9 +1537,6 @@ environment that the lambda function brings back with itself.
 In a future section, we will look at how these patterns can be
 used to make sophisticated and flexible object oriented systems.</p>
 </div>
-<div class="section" id="looping-todo">
-<h2>Looping - (TODO)<a class="headerlink" href="#looping-todo" title="Permalink to this headline">¶</a></h2>
-</div>
 </div>
 
 
@@ -1803,38 +1556,16 @@ used to make sophisticated and flexible object oriented systems.</p>
 
 
 <h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Part 1 - Scheme Basics</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#basic-syntax">Basic syntax</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#output-in-scheme-for-max">Output in Scheme For Max</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#basic-types">Basic types</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#lists-an-introduction">Lists - an introduction</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#evaluation-and-quoting">Evaluation and quoting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#keywords">Keywords</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#lists-in-more-depth">Lists, in more depth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#optional-function-arguments">Optional function arguments</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#vectors">Vectors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hash-tables">Hash-Tables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#branching-with-if">Branching with if</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#grouping-statements-with-begin">Grouping statements with begin</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#testing-equality">Testing equality</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#logical-operators-and-or-not">Logical operators: and, or, not</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#branching-with-cond">Branching with cond</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#scope-and-the-let-statement">Scope and the let statement</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#looping-todo">Looping - (TODO)</a></li>
-</ul>
-</li>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Learn Scheme For Max and S74 Scheme (a work in progress)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="part_1.html">A Scheme Crash Course</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="getting_started.html" title="previous chapter">Getting Started</a></li>
   </ul></li>
 </ul>
 </div>
@@ -1868,7 +1599,7 @@ used to make sophisticated and flexible object oriented systems.</p>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="_sources/part_1.rst.txt"
+      <a href="_sources/part_1_back.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
