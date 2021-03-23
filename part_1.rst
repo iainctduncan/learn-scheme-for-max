@@ -1645,6 +1645,7 @@ key, so this can be used to create a fall-back value
 
   
 .. code:: scm
+
   (define h (hash-table :a 1 :b 2))
   s4m> (hash-table :b 2 :a 1)
   

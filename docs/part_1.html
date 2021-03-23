@@ -14,6 +14,7 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Part 2 - Learning Lisp" href="part_2.html" />
     <link rel="prev" title="Getting Started" href="getting_started.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -1425,6 +1426,17 @@ until one of them returns true. This can be a convenient way to
 make something happen if a previous something returns false. For
 example, we know that a hash-table returns false if asked for a non-existent
 key, so this can be used to create a fall-back value</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">h</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:b</span> <span class="mi">2</span> <span class="nv">:a</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1">; get the value at a key, or some fall-back value</span>
+<span class="p">(</span><span class="k">or </span><span class="p">(</span><span class="nf">h</span> <span class="nv">:a</span><span class="p">)</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
+<span class="p">(</span><span class="k">or </span><span class="p">(</span><span class="nf">h</span> <span class="nv">:c</span><span class="p">)</span> <span class="mi">99</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">99</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="branching-with-cond">
 <h2>Branching with cond<a class="headerlink" href="#branching-with-cond" title="Permalink to this headline">¶</a></h2>
@@ -1479,8 +1491,8 @@ is a predicate that passes.</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="scope-and-the-let-statement">
-<h2>Scope and the let statement<a class="headerlink" href="#scope-and-the-let-statement" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="scopes-with-the-let-statement">
+<h2>Scopes with the let statement<a class="headerlink" href="#scopes-with-the-let-statement" title="Permalink to this headline">¶</a></h2>
 <p>In computer science, ‘scope’ referes to where and when the binding
 of a symbol to a variable or function is in effect. Scheme is
 a <em>lexically scoped</em> language, allowing us to use functions and
@@ -1521,7 +1533,7 @@ to the expression or function.</p>
 </pre></div>
 </div>
 <p>If we change a variable from an outer scope inside a function body,
-by using <strong>set!</strong>, this  will change the variable in the outer scope.
+by using <strong>set!</strong>, this will change the variable in the outer scope.
 A common convention in Scheme is to name functions ending in an exclamation
 mark if they have side-effects on external definitions.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a global var, var</span>
@@ -1659,130 +1671,321 @@ variables local to a function.</p>
 <span class="nv">s4m&gt;</span> <span class="mi">6</span>
 </pre></div>
 </div>
-<p>The temporary scope that is created by a let (or a function) is called an <em>environment</em>.
-It’s a frame in memory with a series of bindings. Normally, it’s destroyed
-as soon as the let returns: there are no more references to the bindings
-in the let, so the garbage-collector cleans up and deletes the environment.
-But if we return a function that has references to the bindings in the let,
-the environment will live on. This is called a <em>closure</em> in many languages,
-and is the key to much of the power of Scheme and Lisp. You might hear this
-refered to as <strong>“let over lambda”</strong>.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; create a function inside a let, returning the function</span>
-<span class="p">(</span><span class="k">define </span><span class="nv">add-42</span>
-  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">to-add</span> <span class="mi">42</span><span class="p">))</span>
-    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
-      <span class="p">(</span><span class="nb">+ </span><span class="nv">to-add</span> <span class="nv">x</span><span class="p">))))</span>
+</div>
+<div class="section" id="looping">
+<h2>Looping<a class="headerlink" href="#looping" title="Permalink to this headline">¶</a></h2>
+<p>Looping in Scheme is also a bit unusual compared to other languages. If you’re
+used to languages with a for-loop, you might be surprised to find there isn’t one!
+Instead, we use a variety of functional programming constructs, in which the
+body of the loop is replaced by a call to a function. This is not as awkward as
+it might at first sound though, because lambda makes it easy to create temporary
+functions.</p>
+<div class="section" id="map-and-for-each">
+<h3>Map and for-each<a class="headerlink" href="#map-and-for-each" title="Permalink to this headline">¶</a></h3>
+<p>The simplest looping constructs in Scheme are <strong>map</strong> and <strong>for-each</strong>.
+These are similar in that in each, we pass them two arguments: a function,
+and a list. The function is then repeatedly evaluated over each item in the list,
+with the list item used as the argument to the function.
+The difference between these two is that <strong>map</strong>
+<em>returns</em> a list of the results, while for-each is called for the side effect of calling
+the function, without collecting up the results in a new list.</p>
+<p>In the example below, we pass map a function that returns the value of its single argument
+incremented by 1, and a list of integers. The call to map returns a new list,
+where each item is the old list item incremented by 1.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function to increment an argument by one, and a list</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">add-1</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
 
-<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">45</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">my-list</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="c1">; get a new list by calling map</span>
+<span class="p">(</span><span class="nb">map </span><span class="nv">add-1</span> <span class="nv">my-list</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>In the above example, the lambda function has a reference to the temporary
-variable “to-add”, and uses it in the body of the function. The function
-is returned from the let (it’s the last expression in the let) and bound
-to the name “add-42” in the define. Because we are holding on to the
-reference to the function, this means the environment lives
-on after the let is finished.  The “to-add” variable
-in the lambda is the let’s variable, it’s the variable that existed in scope
-<em>when the lambda executed</em>. This is called <strong>lexical scope</strong>.</p>
-<p>Here’s an example demonstrating that the scope of <strong>to-add</strong> in the let
-is separate from global scope:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a global var, to-add</span>
-<span class="p">(</span><span class="k">define </span><span class="nv">to-add</span> <span class="mi">1</span><span class="p">)</span>
-
-<span class="c1">; create a function inside a let, with its own to-add variable</span>
-<span class="p">(</span><span class="k">define </span><span class="nv">add-42</span>
-  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">to-add</span> <span class="mi">42</span><span class="p">))</span>
-    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
-      <span class="p">(</span><span class="nb">+ </span><span class="nv">to-add</span> <span class="nv">x</span><span class="p">))))</span>
-
-<span class="c1">; calling add 42 here at global scope level still uses the inner version</span>
-<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">45</span>
-<span class="p">(</span><span class="k">set! </span><span class="nv">to-add</span> <span class="mi">2</span><span class="p">)</span>
-
-<span class="p">(</span><span class="nf">add-42</span> <span class="mi">3</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="mi">45</span>
+<p>Of course, we don’t need to pre-define either the function or list.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nf">map</span>
+  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Nesting functions and lambdas is a way to make <em>objects as functions</em>.
-These are functions that have some private state. The equivalence of lets
-and lambdas means we can intermix them freely and we have a lot of flexibility
-in how we implement function objects. Let’s make a function
-that counts how many times it has been called:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a counter variable in a let</span>
-<span class="p">(</span><span class="k">define </span><span class="nv">counter-fun</span>
-  <span class="c1">; count is a variable private to this function</span>
-  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">count</span> <span class="mi">0</span><span class="p">))</span>
-    <span class="c1">; the lambda gets returned from the let and bound to counter-fun</span>
-    <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
-      <span class="c1">; mutate our private variable and post</span>
-      <span class="p">(</span><span class="k">set! </span><span class="nv">count</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">count</span><span class="p">))</span>
-      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Call&quot;</span> <span class="nv">count</span><span class="p">))))</span>
-
-<span class="p">(</span><span class="nf">counter-fun</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="nv">Call</span> <span class="mi">1</span>
-<span class="p">(</span><span class="nf">counter-fun</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="nv">Call</span> <span class="mi">2</span>
+<p>If we don’t need the values returned from our looping construct, but
+rather want to trigger an event, we use for-each. Because we aren’t
+calling it for the return value, for-each returns <strong>#&lt;unspecified&gt;</strong>.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; for-each will execute the functions, return #&lt;unspecified&gt;</span>
+<span class="p">(</span><span class="nf">for-each</span>
+  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;loop pass, x is:&quot;</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">1</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">2</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">3</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span>
 </pre></div>
 </div>
-<p>The <strong>count</strong> variable is private to counter-fun. We
-have no other way of accessing it.</p>
-<p>We can also accomplish something similar with nested functions.
-We could make this more sophisticated by allowing us
-to specify an increment value for each count. We’ll have
-a builder function make our counter:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function that builds a counter function</span>
-<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">build-counter</span> <span class="nv">increment</span><span class="p">)</span>
-  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">count</span> <span class="mi">0</span><span class="p">))</span>
-    <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
-      <span class="p">(</span><span class="k">set! </span><span class="nv">count</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">increment</span><span class="p">))</span>
-      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Count is now:&quot;</span> <span class="nv">count</span><span class="p">))))</span>
-
-<span class="p">(</span><span class="k">define </span><span class="nv">counter</span> <span class="p">(</span><span class="nf">build-counter</span> <span class="mi">2</span><span class="p">))</span>
-
-<span class="p">(</span><span class="nf">counter</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="nv">Count</span> <span class="nv">is</span> <span class="nv">now:</span> <span class="mi">2</span>
-<span class="p">(</span><span class="nf">counter</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="nv">Count</span> <span class="nv">is</span> <span class="nv">now:</span> <span class="mi">4</span>
+<p>If we want to combine side-effects and collection of values, we
+can have our function create the side-effect prior to returning
+its result:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; produce a side-effect, and collect the incremented value</span>
+<span class="p">(</span><span class="nf">for-each</span>
+  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)(</span>
+    <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;loop pass, x is:&quot;</span> <span class="nv">x</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">)))</span>
+  <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">1</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">2</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">3</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Finally, here is an example of the same pattern where
-the function returned by the lambda, also itself returns a
-value based on the private variable:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function that builds another function and tracks calls</span>
-<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">build-adder</span> <span class="nv">to-add</span><span class="p">)</span>
-  <span class="c1">; a local variable storing number of times we are called</span>
-  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">times-called</span> <span class="mi">0</span><span class="p">))</span>
-    <span class="c1">; a lambda to return the function-object</span>
-    <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
-      <span class="c1">; update the local variable and post to the console</span>
-      <span class="p">(</span><span class="k">set! </span><span class="nv">times-called</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">times-called</span><span class="p">))</span>
-      <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I have done&quot;</span> <span class="nv">times-called</span> <span class="s">&quot;additions!&quot;</span><span class="p">)</span>
-      <span class="c1">; return the results of our addition</span>
-      <span class="p">(</span><span class="nb">+ </span><span class="nv">x</span> <span class="nv">to-add</span><span class="p">))))</span>
-
-<span class="p">(</span><span class="k">define </span><span class="nv">add-3</span> <span class="p">(</span><span class="nf">build-adder</span> <span class="mi">3</span><span class="p">))</span>
-
-<span class="p">(</span><span class="nf">add-3</span> <span class="mi">10</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="s">&quot;I have done 1 additions!&quot;</span>
-<span class="nv">s4m&gt;</span> <span class="mi">13</span>
-
-<span class="p">(</span><span class="nf">add-3</span> <span class="mi">12</span><span class="p">)</span>
-<span class="nv">s4m:</span> <span class="s">&quot;I have done 2 additions!&quot;</span>
-<span class="nv">s4m&gt;</span> <span class="mi">15</span>
+<p>If you’re used to for loops, you might be wanting to iterate over
+an index within a numerical range. We can do this by using the range
+function to create our list of index numbers:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; for-each will execute the functions, return #&lt;unspecified&gt;</span>
+<span class="p">(</span><span class="nf">for-each</span>
+  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;loop pass, x is:&quot;</span> <span class="nv">x</span><span class="p">))</span>
+  <span class="p">(</span><span class="nf">range</span> <span class="mi">0</span> <span class="mi">4</span><span class="p">))</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">0</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">1</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">2</span>
+<span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">3</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span>
 </pre></div>
 </div>
-<p>Note in the above that we did not need to explicitly
-use <strong>to-add</strong> in the bindings of our let. Because lets and
-lambdas are equivalent in scope creation, the to-add variable
-and the times-called variable will both be persisted in the
-environment that the lambda function brings back with itself.
-In a future section, we will look at how these patterns can be
-used to make sophisticated and flexible object oriented systems.</p>
+<p>A nice feature of both map and for-each is that they can
+take any number of collections over which to iterate, and will use
+one from each as arguments to the function. Here’s an example
+of using this to make a list of lists:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nf">map</span>
+  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span> <span class="nv">y</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="nv">x</span> <span class="nv">y</span><span class="p">))</span>
+  <span class="p">(</span><span class="nb">list </span><span class="nv">:a</span> <span class="nv">:b</span> <span class="nv">:c</span><span class="p">)</span>   <span class="c1">; first collection</span>
+  <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>     <span class="c1">; second collection</span>
+<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="nf">:a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">:b</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">:c</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
 </div>
-<div class="section" id="looping-todo">
-<h2>Looping - (TODO)<a class="headerlink" href="#looping-todo" title="Permalink to this headline">¶</a></h2>
+<p>The asute reader will have noticed that in this case, our lambda
+is optional, because we could just use the list function itself!</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; use list as the function</span>
+<span class="p">(</span><span class="nb">map </span><span class="nv">list</span> <span class="p">(</span><span class="nb">list </span><span class="nv">:a</span> <span class="nv">:b</span> <span class="nv">:c</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="nf">:a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">:b</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">:c</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>If the lists are not equal in length, iteration stops when the
+first one runs out.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; uneven lists stop at the shorter lens</span>
+<span class="p">(</span><span class="nb">map </span><span class="nv">list</span>
+  <span class="p">(</span><span class="nb">list </span><span class="nv">:a</span> <span class="nv">:b</span> <span class="nv">:c</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="nf">:a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">:b</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nf">:c</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="c1">; this can be handy combined with range and length</span>
+<span class="p">(</span><span class="k">define </span><span class="nv">fruits</span> <span class="p">(</span><span class="nb">list </span><span class="ss">&#39;apple</span> <span class="ss">&#39;pear</span> <span class="ss">&#39;banana</span><span class="p">))</span>
+<span class="p">(</span><span class="nb">map </span><span class="nv">list</span>
+  <span class="p">(</span><span class="nf">range</span> <span class="mi">0</span> <span class="p">(</span><span class="nb">length </span><span class="nv">fruits</span><span class="p">))</span>
+  <span class="nv">fruits</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="mi">0</span> <span class="nv">apple</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="nv">pear</span><span class="p">)</span> <span class="p">(</span><span class="mi">2</span> <span class="nv">banana</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="looping-with-recursion">
+<h2>Looping with recursion<a class="headerlink" href="#looping-with-recursion" title="Permalink to this headline">¶</a></h2>
+<p>The second most common option for looping in Scheme is using
+functions recursively. We can have a function call <em>itself</em>
+until a condition is met. This requires us to have an if or
+cond statement in the function, with one branch that stops
+the loop and the other that continues it. The stopping branch
+is called the “base case”, and is written normally first. It returns
+a value that will be the return value of the whole loop.
+The other branch must call the function again, typically with
+an argument that is altered such that the loop only runs a finite
+number of times. For example, here is a function that recurses 4 times,
+counting down from 4 to 1:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; our looping function</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">count-down</span> <span class="nv">x</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;count-down, x:&quot;</span> <span class="nv">x</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1">; the base case, stop by returning x</span>
+    <span class="nv">x</span>
+    <span class="c1">; otherwise, re-run with x decremented</span>
+    <span class="p">(</span><span class="nf">count-down</span> <span class="p">(</span><span class="nb">- </span><span class="nv">x</span> <span class="mi">1</span><span class="p">))))</span>
+
+<span class="c1">; now run it!</span>
+<span class="p">(</span><span class="nf">count-down</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">count-down,</span> <span class="nv">x:</span> <span class="mi">3</span>
+<span class="nv">s4m:</span> <span class="nv">count-down,</span> <span class="nv">x:</span> <span class="mi">2</span>
+<span class="nv">s4m:</span> <span class="nv">count-down,</span> <span class="nv">x:</span> <span class="mi">1</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>A more real-world example of recursion would involve doing something
+with the argument, so that the base case returns something that was
+calculated from the recursive calls. Here’s an example of calculating a
+factorial. If you’re not familiar with a factorial, the factorial of
+a number is the result of multiplying a number by all the numbers
+smaller than that number. So factorial 4 (written 4!) is 4 x 3 x 2 x 1.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">factorial</span> <span class="nv">x</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;factorial call, x is:&quot;</span> <span class="nv">x</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1">; the base case, return 1</span>
+    <span class="mi">1</span>
+    <span class="c1">; otherwise, return the value of the current</span>
+    <span class="c1">; pass multiplied by the next recursion</span>
+    <span class="p">(</span><span class="nb">* </span><span class="nv">x</span> <span class="p">(</span><span class="nf">factorial</span> <span class="p">(</span><span class="nb">- </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)))))</span>
+
+<span class="c1">; runnning should return 3 x 2 x 1</span>
+<span class="p">(</span><span class="nf">factorial</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">factorial</span> <span class="nv">call,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">3</span>
+<span class="nv">s4m:</span> <span class="nv">factorial</span> <span class="nv">call,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">2</span>
+<span class="nv">s4m:</span> <span class="nv">factorial</span> <span class="nv">call,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">1</span>
+<span class="nv">s4m&gt;</span> <span class="mi">6</span>
+</pre></div>
+</div>
+<p>If you’re used to other programming languages you may be wondering
+how this could possibly be efficient, with a stack-frame created for
+each call. Won’t we run out of memory if using a very large value for
+the count? (If this means nothing to you, don’t worry about it…)
+The answer is that Scheme uses <em>tail-call optimization</em>. If the
+recursive function call is the last expression in the body of the function,
+the interpreter knows that it’s safe to implement the function
+recursion as a jump, under-the-hood. This means that we don’t actually
+make a new stack frame for each call, and thus tail-call recursion
+is efficient and safe. Recursion in Scheme is a big topic, and we
+will look at common patterns in future chapters.</p>
+</div>
+<div class="section" id="recursion-with-named-let">
+<h2>Recursion with named let<a class="headerlink" href="#recursion-with-named-let" title="Permalink to this headline">¶</a></h2>
+<p>Recursion can be confusing while you get used to it, and sometimes
+the syntax is just more verbose than it needs be, so Scheme includes
+an alternate way of looping that is secretely recursion, but looks much
+more like a “normal” loop. Named-let looks like a cross between a function
+call and a let statement, which makes sense when you remember that let and lambda
+are really the same thing in different syntax.</p>
+<p>When we use <em>named-let</em>, we create a let block, but begin by giving
+it a name. Then we have any number of variable initializations, like a normal
+let. These are the <em>starting</em> values for the variables. Finally, when we
+call the name <em>as if it’s a function</em>, we use new arguments and the intepreter
+starts the let block again, with the arguments replacing the initial values
+for the let variables. As with recursive functions, we need a test to see
+if we should loop again, and a return value that is returned when we’re done
+looping.</p>
+<p>Let’s start as simply as possible with our count-down again:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; name is count-down-loop, let vars consists of x and y</span>
+<span class="c1">; because this is a let, it runs right away</span>
+<span class="p">(</span><span class="k">let </span><span class="nv">count-down-loop</span> <span class="p">((</span><span class="nf">x</span> <span class="mi">3</span><span class="p">))</span>
+  <span class="c1">; body of the let</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;x is: &quot;</span> <span class="nv">x</span><span class="p">)</span>
+  <span class="c1">; if x is still greater than 1, repeat</span>
+  <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&gt; </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">count-down-loop</span> <span class="p">(</span><span class="nb">- </span><span class="nv">x</span> <span class="mi">1</span><span class="p">))))</span>
+
+<span class="nv">s4m:</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">3</span>
+<span class="nv">s4m:</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">2</span>
+<span class="nv">s4m:</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">1</span>
+<span class="nv">s4m&gt;</span> <span class="o">#</span><span class="nv">&lt;unspecified&gt;</span>
+</pre></div>
+</div>
+<p>A more complex example might return something from the let. Remember,
+a let returns its last expression. We’ll make a named-let to calcuate
+a value, x, to some power, y.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; return x to the y: 2 to the 3rd power</span>
+<span class="p">(</span><span class="k">let </span><span class="nv">exp-loop</span> <span class="p">((</span><span class="nf">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">y</span> <span class="mi">3</span><span class="p">))</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;exp-loop, x:&quot;</span> <span class="nv">x</span> <span class="s">&quot;y:&quot;</span> <span class="nv">y</span><span class="p">)</span>
+  <span class="c1">; if y is greater than one, repeat</span>
+  <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&gt; </span><span class="nv">y</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1">; on each pass, x is replaced with x times 2</span>
+    <span class="p">(</span><span class="nf">exp-loop</span> <span class="p">(</span><span class="nb">* </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">- </span><span class="nv">y</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="c1">; if y is 1, return the value of x</span>
+    <span class="nv">x</span><span class="p">))</span>
+
+<span class="nv">s4m:</span> <span class="nv">exp-loop,</span> <span class="nv">x:</span> <span class="mi">2</span> <span class="nv">y:</span> <span class="mi">3</span>
+<span class="nv">s4m:</span> <span class="nv">exp-loop,</span> <span class="nv">x:</span> <span class="mi">4</span> <span class="nv">y:</span> <span class="mi">2</span>
+<span class="nv">s4m:</span> <span class="nv">exp-loop,</span> <span class="nv">x:</span> <span class="mi">8</span> <span class="nv">y:</span> <span class="mi">1</span>
+<span class="nv">s4m&gt;</span> <span class="mi">8</span>
+</pre></div>
+</div>
+<p>Note that unlike recursion with a function, the binding for exp-loop
+is only valid in the let. We can’t call exp-loop from outside of the let,
+as if it’s a function afterwards. For illustration, here is the exact
+same construct, but implemented as an immediately executed function:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; as named let, executing immediately</span>
+<span class="p">(</span><span class="k">let </span><span class="nv">exp-loop</span> <span class="p">((</span><span class="nf">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">y</span> <span class="mi">3</span><span class="p">))</span>
+  <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&gt; </span><span class="nv">y</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">exp-loop</span> <span class="p">(</span><span class="nb">* </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">- </span><span class="nv">y</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="nv">x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="mi">8</span>
+
+<span class="c1">; as a function that is then called</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">exp-function</span> <span class="nv">x</span> <span class="nv">y</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&gt; </span><span class="nv">y</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">exp-function</span> <span class="p">(</span><span class="nb">* </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">- </span><span class="nv">y</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="nv">x</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">exp-function</span>
+<span class="p">(</span><span class="nf">exp-function</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">8</span>
+
+<span class="c1">; with the function, we can call it again</span>
+<span class="p">(</span><span class="nf">exp-function</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1">; whereas is exp-loop is no longer in scope</span>
+<span class="p">(</span><span class="nf">exp-loop</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nv">s4m:</span> <span class="nv">s4m</span> <span class="nv">Error:</span> <span class="c1">;unbound variable exp-loop in (exp-loop 2 3)</span>
+</pre></div>
+</div>
+<p>With any kind of recursion, we have to be careful not to get stuck
+in an infinite loop. Scheme For Max doesn’t provide any kind of protection
+here: Max will lock up and you will need to restart it. This is no
+different than with the JS object, but because recursion is easier to read
+in Scheme, you’re more likely to encounter it. Test your loops!</p>
+</div>
+<div class="section" id="looping-with-while">
+<h2>Looping with while<a class="headerlink" href="#looping-with-while" title="Permalink to this headline">¶</a></h2>
+<p>Though not part of the various Scheme standards, s7 also provides an implemention of the while
+loop. This is convenient when we want a simple, imperative loop, with the
+option to abort or continue. s7 is an unopinionated Scheme dialect, in that it
+doesn’t force us to program in a functional style.</p>
+<p>While expressions consist of a condition and a body. The body is executed repeatedly
+as long as the condition is true. Additionally, we can abort execution of the body,
+jumping back to the beginning with <strong>continue</strong>, or break out of the loop
+entirely with <strong>break</strong>. We can combine this with the <strong>let</strong> form to ensure
+the variables we use in <strong>while</strong> are local.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">count</span> <span class="mi">0</span><span class="p">))</span>
+  <span class="p">(</span><span class="nf">while</span> <span class="p">(</span><span class="nb">&lt; </span><span class="nv">count</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;count:&quot;</span> <span class="nv">count</span><span class="p">)</span>
+    <span class="p">(</span><span class="k">set! </span><span class="nv">count</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">count</span><span class="p">))))</span>
+<span class="nv">s4m:</span> <span class="nv">count:</span> <span class="mi">0</span>
+<span class="nv">s4m:</span> <span class="nv">count:</span> <span class="mi">1</span>
+<span class="nv">s4m:</span> <span class="nv">count:</span> <span class="mi">2</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>Here’s an example using break and continue with random, a construct
+we might use in a musical algorithm.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">count</span> <span class="mi">0</span><span class="p">))</span>
+  <span class="c1">; execute a maxium of 8 times</span>
+  <span class="p">(</span><span class="nf">while</span> <span class="p">(</span><span class="nb">&lt; </span><span class="nv">count</span> <span class="mi">8</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;count:&quot;</span> <span class="nv">count</span><span class="p">)</span>
+
+    <span class="c1">; a 1 in 4 chance we quit after each time</span>
+    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">random</span> <span class="mi">4</span><span class="p">))</span>
+      <span class="p">(</span><span class="k">begin </span><span class="p">(</span><span class="nf">post</span> <span class="s">&quot;aborting!&quot;</span><span class="p">)</span> <span class="p">(</span><span class="nf">break</span><span class="p">)))</span>
+
+    <span class="c1">; a 1 in 4 chance we stay on the same number</span>
+    <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="p">(</span><span class="nf">random</span> <span class="mi">3</span><span class="p">))</span>
+      <span class="p">(</span><span class="k">begin </span><span class="p">(</span><span class="nf">post</span> <span class="s">&quot;continuing!&quot;</span><span class="p">)</span> <span class="p">(</span><span class="nf">continue</span><span class="p">)))</span>
+
+    <span class="p">(</span><span class="k">set! </span><span class="nv">count</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">count</span><span class="p">))))</span>
+<span class="nv">s4m:</span> <span class="nv">count:</span> <span class="mi">0</span>
+<span class="nv">s4m:</span> <span class="nv">count:</span> <span class="mi">1</span>
+<span class="nv">s4m:</span> <span class="nv">count:</span> <span class="mi">2</span>
+<span class="nv">s4m:</span> <span class="nv">count:</span> <span class="mi">3</span>
+<span class="nv">s4m:</span> <span class="nv">aborting!</span>
+<span class="nv">s4m&gt;</span> <span class="p">()</span>
+</pre></div>
+</div>
+<p>The final looping construct we will look at is Scheme’s <strong>do</strong>. Honestly,
+I don’t use <strong>do</strong> very much because the syntax is hard to read. I can
+do almost anything I need with the others we’ve covered. But sometimes
+<strong>do</strong> is convenient for complex loops.</p>
 </div>
 </div>
 
@@ -1824,10 +2027,14 @@ used to make sophisticated and flexible object oriented systems.</p>
 <li class="toctree-l2"><a class="reference internal" href="#testing-equality">Testing equality</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#logical-operators-and-or-not">Logical operators: and, or, not</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#branching-with-cond">Branching with cond</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#scope-and-the-let-statement">Scope and the let statement</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#looping-todo">Looping - (TODO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scopes-with-the-let-statement">Scopes with the let statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#looping">Looping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#looping-with-recursion">Looping with recursion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#recursion-with-named-let">Recursion with named let</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#looping-with-while">Looping with while</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="part_2.html">Part 2 - Learning Lisp</a></li>
 </ul>
 
 <div class="relations">
@@ -1835,6 +2042,7 @@ used to make sophisticated and flexible object oriented systems.</p>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="getting_started.html" title="previous chapter">Getting Started</a></li>
+      <li>Next: <a href="part_2.html" title="next chapter">Part 2 - Learning Lisp</a></li>
   </ul></li>
 </ul>
 </div>

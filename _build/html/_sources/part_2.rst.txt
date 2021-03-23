@@ -1,5 +1,5 @@
-Part 2 - Intermediate Lisp 
-==========================
+Part 2 - Learning Lisp 
+======================
 
 
 
@@ -144,8 +144,5 @@ environment that the lambda function brings back with itself.
 In a future section, we will look at how these patterns can be
 used to make sophisticated and flexible object oriented systems.
 
-
-Looping - (TODO)
----------------- 
 
 
