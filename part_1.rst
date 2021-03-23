@@ -2167,7 +2167,7 @@ Let's start as simply as possible with our count-down again:
   s4m> #<unspecified>
 
 A more complex example might return something from the let. Remember,
-a let returns its last expression. We'll make a named-let to calcuate
+a let returns its last expression. We'll make a named-let to calculate
 a value, x, to some power, y. 
 
 .. code:: scm
@@ -2189,7 +2189,7 @@ a value, x, to some power, y.
      
 Note that unlike recursion with a function, the binding for exp-loop
 is only valid in the let. We can't call exp-loop from outside of the let, 
-as if it's a function afterwards. For illustration, here is the exact 
+as if it's a function. For illustration, here is the exact 
 same construct, but implemented as an immediately executed function:
 
 .. code:: scm

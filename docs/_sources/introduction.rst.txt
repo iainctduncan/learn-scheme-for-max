@@ -9,12 +9,18 @@ Despite the reputation of Lisp as an esoteric and unusual language, it's
 easy to learn enough to be productive in Max, and once you do, I think you'll
 find uses for S4M in lots of your patchers.
 
+If you've arrived here and have never heard of Max or Scheme for Max, this is a book about
+an open-source extension to the Max/MSP computer music platform, enabling one to script
+and live code Max using s7 Scheme. For an overview of Scheme for Max, check out the
+introductory videos on the 
+`Music With Lisp YouTube channel <https://www.youtube.com/channel/UC6ftX7yuEi5uUFkRVJbJyWA>`_. 
+
 Learning Scheme presents some challenges, because Scheme is more of a family of languages than one specific language.
 The advantage of this is that we can find Schemes optimized for particular problem
 domains, and s7 is one these - it's been designed specifically for computer music 
 and interactive computer music tools. The challenge is that, while 
 there are a *lot* of great, free, on-line resources, none of them 
-target s7 specifically. And s7 is a bit of a hybrid, borrowing many features
+targets s7 specifically. And s7 is a bit of a hybrid, borrowing many features
 from Common Lisp as well as Scheme (similar to Clojure), so figuring out the
 differences can be frustrating for a new programmer.  The official s7 documentation has a wealth of examples,
 but it's aimed at the experienced Scheme and Lisp hacker. 

@@ -1883,7 +1883,7 @@ looping.</p>
 </pre></div>
 </div>
 <p>A more complex example might return something from the let. Remember,
-a let returns its last expression. We’ll make a named-let to calcuate
+a let returns its last expression. We’ll make a named-let to calculate
 a value, x, to some power, y.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; return x to the y: 2 to the 3rd power</span>
 <span class="p">(</span><span class="k">let </span><span class="nv">exp-loop</span> <span class="p">((</span><span class="nf">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">y</span> <span class="mi">3</span><span class="p">))</span>
@@ -1903,7 +1903,7 @@ a value, x, to some power, y.</p>
 </div>
 <p>Note that unlike recursion with a function, the binding for exp-loop
 is only valid in the let. We can’t call exp-loop from outside of the let,
-as if it’s a function afterwards. For illustration, here is the exact
+as if it’s a function. For illustration, here is the exact
 same construct, but implemented as an immediately executed function:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; as named let, executing immediately</span>
 <span class="p">(</span><span class="k">let </span><span class="nv">exp-loop</span> <span class="p">((</span><span class="nf">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">y</span> <span class="mi">3</span><span class="p">))</span>
