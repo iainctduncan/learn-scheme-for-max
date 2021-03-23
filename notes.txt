@@ -9,6 +9,8 @@ To cover:
 - DONE function keyword and default args
 - DONE vectors - but not subvectors
 
+- iterating through hash-tables
+
 - looping: named let, for-each, map, do
 - recursion
 

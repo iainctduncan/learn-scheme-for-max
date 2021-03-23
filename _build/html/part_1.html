@@ -222,7 +222,7 @@ We will explain why later on. For now, just know this is null, and it means “e
 </div>
 <p>From now on, the tutorial will not always show the returned null value, such as after
 calls to post, as it does clutter up examples.</p>
-<p>If we want so send out multiple values, so that the output is a Max list message,
+<p>If we want to send out multiple values, so that the output is a Max list message,
 we use the <strong>list</strong> function:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; send the list 1 2 3 out the first outlet</span>
 <span class="c1">; the list function returns a list</span>
@@ -230,9 +230,10 @@ we use the <strong>list</strong> function:</p>
 </pre></div>
 </div>
 <p>The <strong>post</strong> function logs to the Max console. It accepts any number of arguments,
-automatically converting them to string representations and putting spaces between them. It is
-also being called for its side effect and so returns null. You’ll see that the prompt
-from post printed output is <strong>s4m:</strong> instead of the repl return prompt of <strong>s4m&gt;</strong></p>
+automatically converting them to string representations and putting spaces between them.
+Because its being called for its side effect, it returns null. You’ll see that output
+in the console from post is prefixed with <strong>s4m:</strong> (with a colon), whereas the repl
+return prompt is <strong>s4m&gt;</strong> (with a greater-than sign).</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; post to console, with log-nulls set to true</span>
 <span class="p">(</span><span class="nf">post</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
 <span class="nv">s4m:</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span>
@@ -247,8 +248,9 @@ from post printed output is <strong>s4m:</strong> instead of the repl return pro
 <span class="nv">s4m&gt;</span> <span class="p">()</span>
 </pre></div>
 </div>
-<p>During development, it can be helpful to attach a <strong>print s4m-out:</strong> object to your outlet, giving you
-all the output in your Max console while you work.</p>
+<p>During development, it can be helpful to attach a <strong>print s4m-out:</strong> object to your outlet,
+which will additionally print the output from our s4m object’s outlet to the console
+as well:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; shows return value (if @log-nulls is 1) and the printed output from our print object</span>
 <span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="nv">:foobar</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="p">()</span>
@@ -259,7 +261,8 @@ all the output in your Max console while you work.</p>
 <div class="section" id="basic-types">
 <h2>Basic types<a class="headerlink" href="#basic-types" title="Permalink to this headline">¶</a></h2>
 <p>Scheme is dynamically typed, meaning that we do not have to specify in advance of what type
-a variable will be, but variables do have types.</p>
+a variable will be, and a variable’s type can be changed by setting it to a new value of
+a different type. But variables do have types.</p>
 <div class="section" id="booleans-and-predicates">
 <h3>Booleans and Predicates<a class="headerlink" href="#booleans-and-predicates" title="Permalink to this headline">¶</a></h3>
 <p>In Scheme, we use <strong>#true</strong> and <strong>#false</strong> for boolean values, which can also be written as
@@ -280,7 +283,7 @@ In Scheme, predicate functions normally have names ending in a question mark.</p
 <span class="p">(</span><span class="nb">procedure? </span><span class="nv">post</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="no">#t</span>
 
-<span class="c1">; the defined? predicate checks if a symbol is a defined variable</span>
+<span class="c1">; the defined? predicate checks if a symbol is bound to a variable</span>
 <span class="p">(</span><span class="nf">defined?</span> <span class="nv">foo</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="no">#f</span>
 
@@ -298,7 +301,8 @@ In Scheme, predicate functions normally have names ending in a question mark.</p
 </pre></div>
 </div>
 <p>As an aside, remember that null is actually <em>the null list</em>, meaning
-that using the <strong>list?</strong> predicate on the return value will also be true:</p>
+that using the <strong>list?</strong> predicate on the return value of a call
+to <strong>out</strong> will also return true:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; the out function returns null, and null is the null list, so...</span>
 <span class="p">(</span><span class="nb">list? </span><span class="p">(</span><span class="nf">out</span> <span class="mi">0</span> <span class="mi">99</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="no">#t</span>
@@ -317,7 +321,7 @@ Unlike many other languages, Schemes also support fractions as a type, which is 
 helpful in music.
 There are number of predicate functions and conversion functions for working with numeric types,
 and there are some rules for automatic conversion you will want to know. The examples below provide enough to
-work with in Max, and for further details you can consult various online resources.</p>
+work with in Max, and for further details you can consult various online resources. (Dybvig is good here.)</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make an integer</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">1</span>
@@ -386,7 +390,7 @@ there are some helpers in the form of <strong>floor</strong>, <strong>ceiling</s
 <div class="section" id="symbols">
 <h3>Symbols<a class="headerlink" href="#symbols" title="Permalink to this headline">¶</a></h3>
 <p>Symbols are identifiers in Scheme that can be used as the name for
-functions and variables. They can hold more characters than in most
+functions and variables. Symbol names can use more characters than in most
 languages, because Lisps only use whitespace and parentheses for syntax.
 In Scheme, it’s common to include hyphens, exclamation marks, and
 questions marks in names.</p>
@@ -499,7 +503,7 @@ and we can set them using <strong>list-set!</strong>:</p>
 we use a list in the function slot of a paranthetical expression,
 and put the index in the argument slot. Note that the syntax
 for set is a bit unusual, we use the syntax for getting an item
-to refer to a location, and the location is the argument to <strong>set!</strong>.</p>
+to refer to a location, and the location is the argument to <strong>set!</strong>:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get value of l at index 0, applicatively</span>
 <span class="p">(</span><span class="nf">l</span> <span class="mi">0</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">1</span>
@@ -550,7 +554,7 @@ returns the same value:</p>
 </pre></div>
 </div>
 <p>However, when we evaluate a <strong>symbol</strong>, the evaluation process returns that which
-the symbol <em>points to</em>. Which of course requires that either this symbol is
+the symbol <em>points to</em>. Which of course requires that this symbol is
 either <em>bound</em> in the language, or that we have by bound it ourselves by
 defining using the symbol.
 The value pointed to could be an atomic data item, in the case of a variable,
@@ -603,12 +607,12 @@ we will add the use of the symbol function, which we recall creates a symbol fro
 <span class="nv">s4m&gt;</span> <span class="p">()</span>
 </pre></div>
 </div>
-<p>Now we can see what is going on. Evaluating a list <strong>is</strong> the same as calling
-a function. Literally the same. The first element of the list is taken as indicating
-a function, and the rest are its arguments. Scheme syntax consists of lists.
+<p>Now we can see what is going on. <em>Evaluating a list is the same as calling
+a function</em>. Literally the same. The first element of the list is taken as pointing to
+a function, and the rest are used as its arguments. Scheme syntax consists of lists.
 We can build them with functions or special forms, and we can call them as functions
-with eval.</p>
-<p>Eval has a counterpart that does the opposite: <strong>quote</strong>. When we use
+with eval, but really it’s all lists.</p>
+<p>Eval has a counterpart that does its opposite, called <strong>quote</strong>. When we use
 quote, we tell the interpreter <em>to skip</em> evaluation of something that it would otherwise
 evaluate. In a normal function call, expressions used as arguments are evaluated
 <em>prior</em> to the function call, and the values returned are passed to the function
@@ -725,7 +729,8 @@ table and dict names.</p>
 <p>We will use quoting and evaluation a lot in Max, so keywords are very helpful. We can see
 at a glance that a symbol starting with a colon is a keyword, no matter the context.
 It doesn’t matter if we’re not sure whether it will get evaluated, because evaluation
-won’t change anything.</p>
+won’t change anything. This can make our Max code more readable when we use keywords
+in Max messages that we are going to send to the s4m object to evaluate.</p>
 </div>
 <div class="section" id="lists-in-more-depth">
 <h2>Lists, in more depth<a class="headerlink" href="#lists-in-more-depth" title="Permalink to this headline">¶</a></h2>
@@ -812,7 +817,7 @@ at a different head:</p>
 </pre></div>
 </div>
 <p>In the above example, the cdr of list-b <em>is</em> list-a.</p>
-<p>To make a list from scratch with cons, we must backwards, starting
+<p>To make a list from scratch with cons, we work backwards, starting
 with the null list. And we make the null list by quoting the printed representation
 of an empty list, <strong>‘()</strong>.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">null? </span><span class="o">&#39;</span><span class="p">())</span>
@@ -875,7 +880,8 @@ with the null list:</p>
 </div>
 <p>Under the hood, a dotted pair consists of two cells: the first
 has a value and a pointer to the next cell, and the second has only a value.
-This means we can use car and cdr, but there is no cdr of the second element.</p>
+This means we can still use car and cdr, but the cdr returns an atomic
+value instead of a list, and there is no cdr of the second element.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; consing to an atomic value produces a dotted pair</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">my-pair</span> <span class="p">(</span><span class="nb">cons </span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">.</span> <span class="mi">2</span><span class="p">)</span>
@@ -895,14 +901,18 @@ use them when looping through data structures such as association
 lists and hash-tables, both of which have pairs of key and value.</p>
 <div class="section" id="list-accessor-shortcuts">
 <h3>List accessor shortcuts<a class="headerlink" href="#list-accessor-shortcuts" title="Permalink to this headline">¶</a></h3>
-<p>Finally, and these gets almost silly but are convenient, there
-are shortcuts for combinations of car and cdr that are useful
-when working with nested lists. These can always be replaced
-by nested combinations of car and cdr, so you don’t need to know
-them. But you are quite likely to see them in other lisp code,
-so it’s worth knowing they exist, and they can make some code more
-readable (or at least, to someone who knows these oddball functions!).</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; car of nested list</span>
+<p>Finally, and these gets a bit silly but are sometimes convenient, there
+are shortcuts for combinations of car and cdr for
+working with nested lists. These can always be replaced
+by nested combinations of car and cdr, so you don’t <em>need</em> to know
+them. But you are quite likely to see them in other Lisp code,
+so it’s worth knowing they exist. And they can make some code more
+readable - or at least, to someone who knows these oddball functions!</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a nested list</span>
+<span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
+<span class="nv">s4m&gt;</span> <span class="p">((</span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">4</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="c1">; car of nested list</span>
 <span class="p">(</span><span class="nb">car </span><span class="p">(</span><span class="nb">list </span><span class="p">(</span><span class="nb">list </span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">4</span> <span class="mi">5</span><span class="p">)))</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">0</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -930,13 +940,14 @@ readable (or at least, to someone who knows these oddball functions!).</p>
 </div>
 <p>This continues on to 5 letter combinations, like <em>cadar</em>, and
 honestly, you don’t need to know these. But as you may well encounter
-code with functions consisting of strings of c,a,d, and r, know
-you’ll know what you’re seeing.</p>
+code with functions consisting of strings of c,a,d, and r, now
+you’ll know what you’re seeing. And maybe they’ll help in a
+game of Scrabble with programmers.</p>
 </div>
 </div>
 <div class="section" id="optional-function-arguments">
 <h2>Optional function arguments<a class="headerlink" href="#optional-function-arguments" title="Permalink to this headline">¶</a></h2>
-<p>Know that we know about lists, we can use them for creating functions
+<p>Now that we know about lists, we can use them for creating functions
 that can be called with a variable number of arguments. (Also known as “multi-arity
 functions” if you want to talk fancy computer science lingo!)
 This is done by using dotted notation in the function argument, which will

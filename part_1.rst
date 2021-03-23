@@ -222,7 +222,7 @@ We will explain why later on. For now, just know this is null, and it means "emp
 From now on, the tutorial will not always show the returned null value, such as after
 calls to post, as it does clutter up examples.
 
-If we want so send out multiple values, so that the output is a Max list message, 
+If we want to send out multiple values, so that the output is a Max list message, 
 we use the **list** function: 
 
 .. code:: scm
@@ -233,9 +233,10 @@ we use the **list** function:
 
 
 The **post** function logs to the Max console. It accepts any number of arguments,
-automatically converting them to string representations and putting spaces between them. It is
-also being called for its side effect and so returns null. You'll see that the prompt
-from post printed output is **s4m:** instead of the repl return prompt of **s4m>**
+automatically converting them to string representations and putting spaces between them. 
+Because its being called for its side effect, it returns null. You'll see that output
+in the console from post is prefixed with **s4m:** (with a colon), whereas the repl 
+return prompt is **s4m>** (with a greater-than sign).
 
 .. code:: scm
   
@@ -252,8 +253,9 @@ from post printed output is **s4m:** instead of the repl return prompt of **s4m>
   s4m: a is 99
   s4m> () 
  
-During development, it can be helpful to attach a **print s4m-out:** object to your outlet, giving you
-all the output in your Max console while you work.
+During development, it can be helpful to attach a **print s4m-out:** object to your outlet, 
+which will additionally print the output from our s4m object's outlet to the console
+as well:
 
 .. code:: scm
   
@@ -267,7 +269,8 @@ all the output in your Max console while you work.
 Basic types
 -----------
 Scheme is dynamically typed, meaning that we do not have to specify in advance of what type
-a variable will be, but variables do have types. 
+a variable will be, and a variable's type can be changed by setting it to a new value of
+a different type. But variables do have types. 
 
 Booleans and Predicates
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -296,7 +299,7 @@ Some other useful predicates:
   (procedure? post)
   s4m> #t
 
-  ; the defined? predicate checks if a symbol is a defined variable
+  ; the defined? predicate checks if a symbol is bound to a variable 
   (defined? foo)
   s4m> #f
 
@@ -315,7 +318,8 @@ We can check whether something is null with the **null?** predicate.
   s4m> #t
 
 As an aside, remember that null is actually *the null list*, meaning
-that using the **list?** predicate on the return value will also be true:
+that using the **list?** predicate on the return value of a call
+to **out** will also return true:
 
 .. code:: scm
   
@@ -337,7 +341,7 @@ Unlike many other languages, Schemes also support fractions as a type, which is 
 helpful in music.  
 There are number of predicate functions and conversion functions for working with numeric types,
 and there are some rules for automatic conversion you will want to know. The examples below provide enough to
-work with in Max, and for further details you can consult various online resources. 
+work with in Max, and for further details you can consult various online resources. (Dybvig is good here.) 
 
 .. code:: scm
   
@@ -410,7 +414,7 @@ there are some helpers in the form of **floor**, **ceiling**, and **round**.
 Symbols
 ^^^^^^^
 Symbols are identifiers in Scheme that can be used as the name for 
-functions and variables. They can hold more characters than in most
+functions and variables. Symbol names can use more characters than in most
 languages, because Lisps only use whitespace and parentheses for syntax.
 In Scheme, it's common to include hyphens, exclamation marks, and
 questions marks in names. 
@@ -543,7 +547,7 @@ In s7, we can also use what is called *applicative-syntax*, where
 we use a list in the function slot of a paranthetical expression, 
 and put the index in the argument slot. Note that the syntax
 for set is a bit unusual, we use the syntax for getting an item
-to refer to a location, and the location is the argument to **set!**.
+to refer to a location, and the location is the argument to **set!**:
 
 .. code:: scm
   
@@ -602,7 +606,7 @@ returns the same value:
   s4m> "foobar"
 
 However, when we evaluate a **symbol**, the evaluation process returns that which 
-the symbol *points to*. Which of course requires that either this symbol is 
+the symbol *points to*. Which of course requires that this symbol is 
 either *bound* in the language, or that we have by bound it ourselves by 
 defining using the symbol. 
 The value pointed to could be an atomic data item, in the case of a variable, 
@@ -662,13 +666,13 @@ we will add the use of the symbol function, which we recall creates a symbol fro
   s4m: 1 2 3
   s4m> ()
 
-Now we can see what is going on. Evaluating a list **is** the same as calling
-a function. Literally the same. The first element of the list is taken as indicating
-a function, and the rest are its arguments. Scheme syntax consists of lists.
+Now we can see what is going on. *Evaluating a list is the same as calling
+a function*. Literally the same. The first element of the list is taken as pointing to
+a function, and the rest are used as its arguments. Scheme syntax consists of lists.
 We can build them with functions or special forms, and we can call them as functions
-with eval. 
+with eval, but really it's all lists. 
 
-Eval has a counterpart that does the opposite: **quote**. When we use
+Eval has a counterpart that does its opposite, called **quote**. When we use
 quote, we tell the interpreter *to skip* evaluation of something that it would otherwise
 evaluate. In a normal function call, expressions used as arguments are evaluated
 *prior* to the function call, and the values returned are passed to the function 
@@ -809,7 +813,8 @@ table and dict names.
 We will use quoting and evaluation a lot in Max, so keywords are very helpful. We can see
 at a glance that a symbol starting with a colon is a keyword, no matter the context. 
 It doesn't matter if we're not sure whether it will get evaluated, because evaluation
-won't change anything.
+won't change anything. This can make our Max code more readable when we use keywords
+in Max messages that we are going to send to the s4m object to evaluate.
 
 Lists, in more depth
 --------------------
@@ -911,7 +916,7 @@ at a different head:
 
 In the above example, the cdr of list-b *is* list-a.
 
-To make a list from scratch with cons, we must backwards, starting
+To make a list from scratch with cons, we work backwards, starting
 with the null list. And we make the null list by quoting the printed representation
 of an empty list, **'()**.
 
@@ -985,7 +990,8 @@ with the null list:
 
 Under the hood, a dotted pair consists of two cells: the first
 has a value and a pointer to the next cell, and the second has only a value.
-This means we can use car and cdr, but there is no cdr of the second element.
+This means we can still use car and cdr, but the cdr returns an atomic
+value instead of a list, and there is no cdr of the second element.
 
 .. code:: scm
 
@@ -1009,15 +1015,19 @@ lists and hash-tables, both of which have pairs of key and value.
 List accessor shortcuts
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Finally, and these gets almost silly but are convenient, there
-are shortcuts for combinations of car and cdr that are useful
-when working with nested lists. These can always be replaced
-by nested combinations of car and cdr, so you don't need to know
-them. But you are quite likely to see them in other lisp code,
-so it's worth knowing they exist, and they can make some code more
-readable (or at least, to someone who knows these oddball functions!).
+Finally, and these gets a bit silly but are sometimes convenient, there
+are shortcuts for combinations of car and cdr for 
+working with nested lists. These can always be replaced
+by nested combinations of car and cdr, so you don't *need* to know
+them. But you are quite likely to see them in other Lisp code,
+so it's worth knowing they exist. And they can make some code more
+readable - or at least, to someone who knows these oddball functions!
 
 .. code:: scm
+
+  ; a nested list
+  (list (list 0 1) (list 2 3) (list 4 5)))
+  s4m> ((0 1) (2 3) (4 5))
 
   ; car of nested list
   (car (list (list 0 1) (list 2 3) (list 4 5)))
@@ -1046,13 +1056,14 @@ readable (or at least, to someone who knows these oddball functions!).
 
 This continues on to 5 letter combinations, like *cadar*, and
 honestly, you don't need to know these. But as you may well encounter
-code with functions consisting of strings of c,a,d, and r, know
-you'll know what you're seeing.
+code with functions consisting of strings of c,a,d, and r, now
+you'll know what you're seeing. And maybe they'll help in a
+game of Scrabble with programmers.
 
 Optional function arguments
 --------------------------------------------------------------------------------
 
-Know that we know about lists, we can use them for creating functions
+Now that we know about lists, we can use them for creating functions
 that can be called with a variable number of arguments. (Also known as "multi-arity 
 functions" if you want to talk fancy computer science lingo!)
 This is done by using dotted notation in the function argument, which will
