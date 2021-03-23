@@ -1,4 +1,4 @@
-.. Learn Scheme For Max and S74 Scheme documentation master file
+.. Learn Scheme For Max and s7 Scheme documentation master file
 
 Learn Scheme For Max 
 ====================

@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Learn Scheme For Max and S74 Scheme'
+project = 'Learn Scheme For Max and s7 Scheme'
 copyright = '2021, Iain CT Duncan'
 author = 'Iain CT Duncan'
 
