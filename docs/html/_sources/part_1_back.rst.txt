@@ -1,15 +1,76 @@
-Part 1 - Scheme Basics
-======================
+A Scheme Crash Course
+==============================
 
-Basic syntax 
+Setting Up
+----------
+To run these examples, you should be at a Scheme For Max interpreter. I recommend opening
+Max and having both a file editor and the built in s4m.repl bpatcher open, with
+the Max console in view. You'll want to be able to send lines of code to the 
+interpreter and see the results in the console.  If you haven't already, I recommend watching the tutorial videos
+on the "Music With Lisp" youtube channel on installation and first steps. These
+will get you up and running, so that you are sending code to your s4m object and 
+seeing the results in the Max console. To send code from your editor
+to s4m, check out the s4m cookbook example on editor integration. If you plan on using
+S4M extensively, it's well  worth getting
+this going as it will make working a lot more pleasant. But you can certainly
+get started just using the **s4m.repl** bpatcher too.
+
+In the code sections in this tutorial, I show code as we send it to the intepreter and the
+results back from the interpreter. Lines that start with a semi-colon are comments
+and don't get run by the interpreter. Lines with no prefixing are expressions
+we send to s4m, whether from the built in text editor bpatcher or
+from our editor over a network connection. (Or sent to the interpreter some other way, perhaps from
+a Max message - see the Scheme For Max documentation if you're not clear
+how to do this). Let's quickly make sure we're clear on this:
+
+.. code:: scm
+
+  ;; a comment, you can skip typing this in
+
+  ;; an expression we send to s4m, it has no prefix
+  ;; and its return value from the interpreter
+  (+ 1 1)
+  s4m> 2
+
+Some Scheme expressions have side effects. For example, the
+**post** function takes any number of arguments and logs them
+as strings to the Max console. 
+Console output starts with **s4m:** (note the colon)
+
+.. code:: scm
+
+  ;; an expression asking the intepreter to log to the console
+  (post "testing" 1 2)
+  s4m: testing 1 2 
+
+If you have set the s4m attribute **log-null** to true (you can use
+the checkbox in the inspector), the console will also log the return
+values from any functions that return the **null list**. Normally when
+we work in Scheme For Max, we won't want to do this, so the default
+setting is for null values to be hidden from the console, but for the purpose
+of this tutorial, I recommend turning log-null on so you have a visual indication
+of the returned value. The post function is called only for its side effect
+(logging), so it returns the null list.  With log-null on, a call to post
+will thus show:
+
+.. code:: scm
+
+  ;; post prints output, and returns the null list ()
+  (post "hello-world")
+  s4m: hello-world
+  s4m> ()
+
+If you are able to successfully duplicate the above, we're ready to begin.
+
+
+Basic Syntax 
 ------------
 
 Scheme syntax is very simple: everything in the language is done with **s-expressions**.
-(**sexp's** for short.) A simple s-expression is either one **atom** (such as a symbol, number, string),
+(**sexprs** for short.) A simple s-expression is either one **atom** (such as a symbol, number, string),
 or a series of atoms surrounded by parentheses. S-expressions can be nested to any depth 
 we want. 
-
-When we send an sexp to the interpreter to be **evaluated**, the interpreter evaluates
+When we send an sexpr to the interpreter to be **evaluated**, the interpreter evaluates
 all nested expressions, from the inside out, ending with evaluation of the outer sexpr.
 Evaluation of a parenthetical s-expr is done by calling the first atom as a function, 
 with the remaining atoms passed as **parameters**, also called **arguments**. (In strict computer science
@@ -58,8 +119,9 @@ This is critical to understand. Evaluation of an sexp calls the function
 (or special form) in the first slot, with the arguments from the rest of the sexp, and nested sexps are
 evaluated inside-out. 
 
+
 Variables
----------
+-----------
 
 The **define** function creates a variable by binding a value to a **symbol**
 in the currently executing scope. If we run define at the top level of our program,
@@ -194,8 +256,8 @@ Some texts only use the lambda form as it is more explicit, and thus clear what 
 will use both as space can be at a premium in a Max patch!
 
 
-Output in Scheme For Max
--------------------------
+Side-trip: Output in Scheme For Max
+------------------------------------
 
 In Scheme for Max, we have two functions we will use all the time for output, **out** and **post**.
 **out** is used to send values out the s4m object's outlets. It takes two arguments, the
@@ -264,8 +326,8 @@ all the output in your Max console while you work.
 
 
 
-Basic types
------------
+Basic Types
+-------------
 Scheme is dynamically typed, meaning that we do not have to specify in advance of what type
 a variable will be, but variables do have types. 
 
@@ -326,6 +388,8 @@ that using the **list?** predicate on the return value will also be true:
   ; just for fun...
   (boolean? (list? (out 0 99)))
   s4m> #t
+
+
 
 
 Numerical Types
@@ -410,9 +474,9 @@ there are some helpers in the form of **floor**, **ceiling**, and **round**.
 Symbols
 ^^^^^^^
 Symbols are identifiers in Scheme that can be used as the name for 
-functions and variables. They can hold more characters than in most
+functions and variables. They can hold many more characters than in most
 languages, because Lisps only use whitespace and parentheses for syntax.
-In Scheme, it's common to include hyphens, exclamation marks, and
+In Scheme, it's very common to included hyphens, exclamation marks, and
 questions marks in names. 
 
 .. code:: scm
@@ -420,10 +484,9 @@ questions marks in names.
   ; symbols for predicates usually end in question marks 
   (define is-one? (lambda (x) (= 1 x)))
 
-Evaluating a symbol returns the value stored at that symbol:
+Evaluating a symbol returns the value stored at that symbol
   
 .. code:: scm
-
   (define answer 42)
   sm4> 42
 
@@ -431,7 +494,7 @@ Evaluating a symbol returns the value stored at that symbol:
   s4m> 42
 
 
-Strings and characters
+Strings and Characters
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Scheme also has a string type and a character type. Now strictly speaking, Max doesn't really 
@@ -493,16 +556,16 @@ We can also go back and forth between symbols and strings.
   s4m> #t 
 
 There are also functions for extracting characters from strings and building
-up strings, but I don't find myself using these much in Max, so we'll leave
-this to the reader to explore online. That's all we'll say about strings in 
+up strings, but one needs them very infrequently working in Max, so we leave
+this to the reader to explore online. That's all we will say about strings in 
 this crash course. 
 
 
 .. TODO comparison with Max symbols and strings
 
 
-Lists - an introduction
-------------------------
+Lists - a brief introduction
+----------------------------
 Lists are the most important compound data type in Lisps, including Scheme.
 So much so that Lisp originally stood for "List Processing"! We'll be
 looking at lists in detail later, but right now we have a bit of a 
@@ -566,11 +629,11 @@ those soon.
 The astute reader will have noticed that the *printed representation*
 we get back when evaluating a variable that holds a list (or a call
 to the list function), looks an awful lot like an s-expression. In
-the above example, it looks just like a call to a function called "100".
+the above example, looks just like a call to a function called "100".
 Hold that thought, it's going to become very important! 
 
 
-Evaluation and quoting 
+Evaluation and Quoting 
 -----------------------
 
 At this point, we are able to make variables and functions, and we know about 
@@ -603,8 +666,7 @@ returns the same value:
 
 However, when we evaluate a **symbol**, the evaluation process returns that which 
 the symbol *points to*. Which of course requires that either this symbol is 
-either *bound* in the language, or that we have by bound it ourselves by 
-defining using the symbol. 
+defined in the language, or that we have defined it ourselves. 
 The value pointed to could be an atomic data item, in the case of a variable, 
 or a function, in the case of a function name:
 
@@ -773,7 +835,7 @@ Quote and eval are opposites, so we can nest them as much as we want:
   s4m> hello world 
  
 
-.. TODO NEXT: symbols in Max, why it matters
+NEXT: symbols in Max, why it matters
     
  
 Keywords
@@ -814,30 +876,27 @@ won't change anything.
 Lists, in more depth
 --------------------
 
-.. TODO clarify that operations make new lists
-
 As we previously discussed, under the hood, Lips lists are *linked-lists*.
-In the computer memory, every cell in a list includes
+In the computer's memory, every cell in a list includes
 a value, and a pointer to the next item. The last item in a list has a pointer
 to a hidden cell that holds the **null list**. So if we look at a list of three
 elements, **'(1 2 3)**, there are three cells with numbers and pointers, and
-one hidden cell with the null list, to which the third cell's pointer points. Or
+one hidden cell with the null list. The third cell's pointer points there. Or
 another way of thinking of it is that there are three cells, the last of which
-points to the null list, which is a special case.
+points to the null list, which is magical and gets special rules. 
 
-In this section we will look briefly at the classical Lisp list functions. 
-I will admit these Lisp list functions have bizarre names: **car**, **cdr**, **cons**, etc.
+Ok, I admit, Lisp list functions are weird, with names like **car**, **cdr**, and **cons**.
 While these names seem annoying at first, they have stuck around
 as they are easy to type, and will become second nature pretty quickly.
-(They originally come from operating instruction names on very old IBM computers!)
+They come from operating instruction names on very old IBM computers.
 
-We can get the first item of a list using the **car** function, and
-we can get the *rest* of the list, by using the **cdr** function. We can think of
-the combination of car and cdr as taking off the head of the list, which leaves us
-with one single item (the car) and the remaining linked list (the cdr). Thus cdr,
-if called on a proper list, always returns a list. Though the list it returns
-could be the null list, if the head was the last proper item. 
-An example is worth a thousand words here:
+We can get the first item of a list using the **car** function.
+We can get the *rest* of the list, by using the **cdr** function, which
+always returns a list. (Well, not *always-always*, but for now let's say always:
+if used on a *proper-list*, cdr always returns a list). cdr returns a list
+because if we start at item 2 in our liked list, having chopped off item 1 (the head), 
+the chain of links will still work to the end of the list. An example is worth
+a thousand words here:
 
 .. code:: scm
   
@@ -872,18 +931,14 @@ is like chopping off the head twice - and we still get a list:
   (null? (cdr (cdr (cdr l))))
   s4m> #t
 
-  ; but is also still a list!
-  (list? (cdr (cdr (cdr l))))
-  s4m> #t
-
-So it's important to remember that a proper list is a set of value/pointer entries, where
+So remember, a proper list is a set of value/pointer entries, where
 the last one points to the null list. The value-pointer pairs
-have a special name: **cons cells**.
+have a special name, they are called **cons cells**.
 
 In addition to making lists with the list function, we can use the **cons** function.
 The list function does the magic for us, while **cons** involves us in the
-underlying linked-list. We use cons to add a new cons cell by passing in
-an item, and a list that our new cell should link to.
+underlying linked-list. We use cons to add a new cons cell
+to the *head* of a list.
 
 .. code:: scm
  
@@ -891,27 +946,7 @@ an item, and a list that our new cell should link to.
   (cons 0 (list 1 2 3))
   s4m> (0 1 2 3)
 
-Note that cons *makes a new list*. This is an important distinction. Making
-a new list by adding a cell to the head doesn't change an old list starting
-at a different head:
-
-.. code:: scm
- 
-  (define list-a (1 2 3))
-  s4m> (1 2 3)
-
-  (define list-b (cons 0 list-a))
-  s4m> (0 1 2 3)
-
-  list-a
-  s4m> (1 2 3)
-
-  list-b 
-  s4m> (0 1 2 3)
-
-In the above example, the cdr of list-b *is* list-a.
-
-To make a list from scratch with cons, we must backwards, starting
+To make a list from scratch with cons, we would work backwards, starting
 with the null list. And we make the null list by quoting the printed representation
 of an empty list, **'()**.
 
@@ -924,19 +959,17 @@ of an empty list, **'()**.
   (cons 3 '())
   s4m> (3)
 
-  ; make a list by cons'ing 3 times
+  ; make a list, in a cumbersome way
   (cons 1 (cons 2 (cons 3 '())))
   s4m> (1 2 3)
 
 If we want to add to the end of a list, we need to use the **append** function,
-which takes multiple lists as arguments returns a new list consisting
-of the joined argument lists. This means that, unlike
-cons, the item to be added needs to itself be a list. Like cons,
-the result is a new list, and the original lists are unchanged.
+which takes multiple lists as arguments and joins them. This means that, unlike
+cons, the item to be added needs to be a list:
 
 .. code:: scm
 
-  ; make a list, by joining two lists
+  ; join two lists
   (append (list 1 2 3) (list 4 5 6))
   s4m> (1 2 3 4 5 6)
 
@@ -946,10 +979,6 @@ the result is a new list, and the original lists are unchanged.
 
   (append l (list 4))
   s4m> (1 2 3 4)
-
-  ; note that l is unchanged!
-  l
-  s4m> (1 2 3) 
 
   ; or with quote
   (append l '(5))
@@ -962,10 +991,12 @@ Append can have as many arguments as you want
   (append (list 1 2) (list 3 4) (list 5 6))
   s4m> (1 2 3 4 5 6)
 
+.. LEFT OFF
+
 
 Note that if you call append with a final element that is *not* a list,
-you won't get an error... but you also won't get a proper list. This is
-because the final item is an atomic value instead of a value/pointer pair.
+you won't get an error.. but you also won't get a proper list. This is
+because the final item is a simple value and not a value/pointer pair.
 
 .. code:: scm
 
@@ -973,8 +1004,8 @@ because the final item is an atomic value instead of a value/pointer pair.
   s4m> (1 2 . 4)
 
 The dot before 4 indicates that the list stopped being a proper list
-at the third item. Improper lists are used in various places, but most typically
-as pairs, also called *dotted pairs*. We get them when we use cons, *without* ending our chain
+at the third item. Improper lists are used in various places, but typically
+only as pairs, also called *dotted pairs*. We get them when we use cons, *without* ending our chain
 with the null list:
 
 .. code:: scm
@@ -1002,256 +1033,15 @@ This means we can use car and cdr, but there is no cdr of the second element.
   (cdr (cdr my-pair))
   s4m> Error: cdr argument 2 is an integer, but should be a pair.
 
-Dotted-pairs and improper lists are important to understand as you'll
-use them when looping through data structures such as association
-lists and hash-tables, both of which have pairs of key and value.
+.. TODO the cons and cdr shortcuts
 
-List accessor shortcuts
-^^^^^^^^^^^^^^^^^^^^^^^
+.. TODO some sort of conclusion on lists, yo
 
-Finally, and these gets almost silly but are convenient, there
-are shortcuts for combinations of car and cdr that are useful
-when working with nested lists. These can always be replaced
-by nested combinations of car and cdr, so you don't need to know
-them. But you are quite likely to see them in other lisp code,
-so it's worth knowing they exist, and they can make some code more
-readable (or at least, to someone who knows these oddball functions!).
-
-.. code:: scm
-
-  ; car of nested list
-  (car (list (list 0 1) (list 2 3) (list 4 5)))
-  s4m> (0 1)
-
-  ; cdr of nested list
-  (cdr (list (list 0 1) (list 2 3) (list 4 5)))
-  s4m> ((2 3) (4 5))
-
-  ; caar gets the car of the car
-  (caar (list (list 0 1) (list 2 3) (list 4 5)))
-  s4m> 0
-
-  ; cdar gets the cdr, of the car - which is a list
-  (cdar (list (list 0 1) (list 2 3) (list 4 5)))
-  s4m> (1)
-
-  ; cadr gets the car, of the cdr 
-  ; aka the first item of the cdr of the outer list 
-  (cadr (list (list 0 1) (list 2 3) (list 4 5)))
-  s4m> (2 3)
-
-  ; cddr gets the cdr of the cdr, which is a list of lists  
-  (cddr (list (list 0 1) (list 2 3) (list 4 5)))
-  s4m> ((4 5))
-
-This continues on to 5 letter combinations, like *cadar*, and
-honestly, you don't need to know these. But as you may well encounter
-code with functions consisting of strings of c,a,d, and r, know
-you'll know what you're seeing.
-
-Optional function arguments
---------------------------------------------------------------------------------
-
-Know that we know about lists, we can use them for creating functions
-that can be called with a variable number of arguments. (Also known as "multi-arity 
-functions" if you want to talk fancy computer science lingo!)
-This is done by using dotted notation in the function argument, which will
-put any arguments past the explicitly named arguments into a list. This list will be
-the null list if no additional arguments are given:
-
-  
-.. code:: scm
-
-  ; one mandatory argument x, and 0 or more optionals 
-  ; the list 'args' 
-  (define (my-fun x . args)
-    (post "called with" (length args) "optional args")
-    (post "optional args:" args))
-  s4m> my-fun
-
-  (my-fun 1)
-  s4m: called with 0 optional args
-  s4m: optional args: ()
-  s4m> '() 
-
-  (my-fun 1 2 3)
-  s4m: called with 2 optional args
-  s4m: optional args: (2 3)
-  s4m> '() 
-
-
-This can be done with lambda as well, but lambda has an additional option.
-If the argument list for a lambda is only one symbol, this symbol will be 
-bound to a list of all the arguments.
-
-.. code:: scm
-
-  ; a lambda that bundles all its args into a list
-  (define my-lambda (lambda args (post "args:" args)))
-  s4m> my-lambda
-   
-  (my-lambda 1 2 3)
-  s4m: args: (1 2 3)
-  s4m> '() 
-
-
-.. TODO keyword arguments and default value args
-
-s7 Scheme borrows heavily from Common Lisp, and includes two non-standard special forms, 
-**define*** and **lambda***, that give us the ability to use *keyword arguments* with
-default values in our function definitions. We do this by using lists of key and default
-value in place of arguments. To call the function with a keyword argument, we pass in a
-keyword and a value pair for that argument. This is most easily explained with the example
-below, taken straight from the s7 documentation: 
-
-.. code:: scm
-
-  ; a function with one required argument, a, and two optional
-  ; keyword args, b & c, with default values of 32 and "hi"
-  (define* (hi a (b 32) (c "hi")) 
-    ; returns a list of the arguments
-    (list a b c))
-  s4m> hi
-
-  ; call hi with only one argument and we get the defaults
-  (hi 99)
-  s4m> (99 32 "hi")
-
-  ; call hi with three arguments, and we use them all
-  (hi 99 88 77)
-  s4m> (99 88 77)
-
-  ; call hi with one argument and one keyword argument
-  (hi 99 :c 77)
-  s4m> (99 32 77)
-
-
-Vectors 
---------------------------------------------------------------------------------
-
-Lists do have some disadvantages. Linked lists need to be traversed to get to their 
-contents, which means that accessing elements deep in a long list can be slow. And
-adding items to the end of a list requires copying the entire list with append.
-In music situations, we often need to access anywhere in a sequential data structure,
-or add items at the end of a table, so for these types of cases, a more appropriate type is the **vector**.
-Like lists, vectors can hold any data type, and can hold multiple data types within
-a vector. If we want to model Max data that would be in a buffer
-or table in Max, the vector is likely what we want.
-
-Note that the printed representation of a vector starts with **#** to differentiate
-it from a list.
-
-.. code:: scm
-  
-  ; create a vector, containing 1 2 3 4
-  (define v (vector 10 11 12 13))
-  s4m> #(10 11 12 13)
-
-  ; get its length
-  (vector-length v)
-  s4m> 4
-
-  ; is it really a vector?
-  (vector? v)
-  s4m> #t
-
-  ; access an element
-  (vector-ref v 2)
-  s4m> 12
-
-  ; or with applicative syntax
-  (v 0) 
-  s4m> 10
-
-  ; set with vector-set!
-  (vector-set! v 0 99)
-  s4m> 99
-
-  v
-  s4m> (99 11 12 13)
-  
-  ; or with applicative syntax
-  (set! (v 0) 100)
-  s4m> 100
-
-  ; make a vector using quote and the # sign
-  (define v '#(0 1 2 3))
-  s4m> #(0 1 2 3)
-
-Note that Max only has a list type for messages, so when we cross the Max to Scheme
-boundary and vice versa, it's worth thinking about which type is appropriate. 
-Vectors can be converted to and from lists easily, and S4M will use vectors instead
-of lists in places where that makes sense. For example, in reading a Max dictionary into
-Scheme, arrays in the dictionary will be converted to vectors instead of Scheme lists.
-And s4m has functions for copying from tables and buffers to vectors, and vice versa.
-We won't cover those here, but they are detailed in the s4m documentation.
-
-.. code:: scm
-  
-  ; conversions
-  (vector->list '#(0 1 2 3))
-  s4m> (0 1 2 3)
-
-  (list->vector '(0 1 2 3))
-  s4m> #(0 1 2 3)
-  
-We can also make a vectors without specifying first what they will hold with 
-**make-vector**:
-
-.. code:: scm
-  
-  ; make a 4 point vector
-  (make-vector 4)
-  s4m> #( #<unspecified> #<unspecified> #<unspecified> #<unspecified> )
-
-  ; this is more useful if we pass a starting value
-  (make-vector 4 0)
-  s4m> #(0 0 0 0)
-
-
-.. TODO subvectors, but it appears to be busted!!!
-  looking this And we can copy parts of a vector using subvector, passing in
-  starting and ending indexes:
-  
-  .. code:: scm
-    
-    (define v (vector 1 2 3 4))
-    s4m> #(1 2 3 4)
-  
-    (define v2 (subvector v 2 3))
-
-
-s7 supports multi-dimensional vectors. We create these by passing
-a list to make vector where the vector size argument goes. The lists
-specifies the size in as many dimensions as we want.
-
- 
-.. code:: scm
-  
-  ; make a 2 x 3 vector, initialized to 0
-  (define v2x3 (make-vector (list 2 3) 0))
-  s4m> #2d((0 0 0) (0 0 0))
-
-  ; read from the vector
-  (v2x3 1 2)
-  s4m> 0  
-
-  ; set with applicative syntax
-  (set! (v2x3 1 2) 99)
-  s4m> 99
-
-  v2x3 
-  s4m> #2d((0 0 0) (0 0 99))
-
- 
-s7 has quite a few interesting additional vector functions, especially around
-multi-dimensional vectors, that you can read about on the official s7 page.
-
-.. TODO check what happens if we output a vector...
+.. TODO vectors 
 
 
 Hash-Tables
---------------------------------------------------------------------------------
+^^^^^^^^^^^
 Hash-tables are key-value stores, similar to dictionaries in Python or JavaScript.
 A key can be anything we'd like, but it's most common to use a keyword as a key,
 or barring that, a symbol. 
@@ -1270,8 +1060,8 @@ or barring that, a symbol.
   (hash-table-set! my-hash :b 99)
   s4m> 99
 
-Asking for a value that is not in a hash-table returns **#f**, and we can remove
-an item from a hash-table by storing **#f** at the key. We can put a new item
+Asking for a value that is not in a hash-table returns #f, and we can remove
+an item from a hash-table by storing #f at the key. We can put a new item
 in the hash-table by setting it's value with a key.
 
 .. code:: scm
@@ -1292,9 +1082,8 @@ in the hash-table by setting it's value with a key.
   my-hash
   s4m> (hash-table :a 1 :c 99)
 
-As noted earlier, s7 Scheme supports *applicative syntax* for compound data types, 
-and this works for hash-tables too, allowing us to get a value from a hash-table by 
-calling the hash-table as a function with the key as an argument
+s7 Scheme supports *applicative syntax* for compound data types, meaning
+we can use a hash-table variable as a function, and a key as an argument.
 
 .. code:: scm
   
@@ -1302,8 +1091,10 @@ calling the hash-table as a function with the key as an argument
   (my-hash :a)
   s4m> 1
 
-As with lists, calling the hash-table with a key gives us a memory location, 
-and we can thus also use this with **set!**:
+
+When we do this, calling the hash-table with a key gives us a memory location, 
+and we can thus also use this with
+**set!**:
 
 .. code:: scm
   
@@ -1371,8 +1162,8 @@ and reading from Max dictionaries. See the Scheme For Max documentation for deta
 on these functions.
 
 
-Branching with if  
------------------
+if, cond, predicates, and testing equality
+------------------------------------------
 
 In Scheme, we typically branch using one of two special forms: **if** and **cond**.
 These are both *special forms* - they look like function calls but are not
@@ -1403,9 +1194,7 @@ for the clauses *only* evaluate if that clause is to be returned.
         (+ 66 4))
   s4m> 33
 
-Grouping statements with begin
-------------------------------
- 
+  
 So far, if looks just like a function. The fact that it is not a function
 is illustrated if we put side effects in our two clauses. If we want to
 add a side effect to a clause that will return a value, we can enclose
@@ -1479,8 +1268,8 @@ we can use the **null?** predicate.
   (if (null? var)
     (post "Var is the null list."))
 
-We've seen some of these already, but some other useful predicates are 
-**defined?**, **procedure?**, **symbol?**, **number?**, **list?**, **keyword?**.
+Some other useful predicates are **defined?**, **procedure?**, **symbol?**, **number?**,
+**list?**, **keyword?**.
 
 .. TODO: link to a list of S7 built in predicates 
   
@@ -1489,8 +1278,7 @@ Not all Scheme implementations have the same predicates built in,
 so if you look up a predicate online, you probably want to test it
 in the REPL to make sure it's in S74, or add it to your base file.
 
-
-Testing equality
+Testing Equality
 ----------------
 Testing equality in Scheme is a bit different than you might be used to in other languages
 as well. 
@@ -1587,83 +1375,9 @@ When in doubt, test your equality checks in the repl! But in general,
 numeric equivalence uses **=**, non-numeric and compound type equality uses 
 **equal?**, and pointer comparison uses **eq?** and/or **eqv?**.
 
-Logical operators: and, or, not
--------------------------------
-
-Testing complex conditions often requires logical operators, for which Scheme
-provides us **and**, **or**, and **not**. 
-
-.. code:: scm
-
-  ; and returns true only if all predicates return true
-  (and (= 1 1) (> 2 1) (< 1 2))
-  s4m> #t
-
-  ; or returns true if any return true
-  (or (= 1 2) (= 1 1))
-  s4m> #t
-
-  ; not returns the negation of a boolean
-  (not (or (= 1 2) (= 1 1)))
-  s4m> #f
-
-These are *special forms*, not regular functions, meaning that evaluation doesn't 
-follow the regular function evaluation rules of evaluating all subexpressions and
-passing the *results* in as arguments. Rather, these *short-circuit*. This can
-be useful if we want to evaluate some expressions only if previous expressions
-have returned either true or false.  Remember, in a boolean context, only
-#false is #false! 
-
-.. code:: scm
-
-  ; evaluate the second expression only if the first is true
-  ; note: the return value is from the last evaluated expression
-  (and (= 1 0) (post "I ran!"))
-  s4m> #f
-
-If **and** were a function, we would see our post statement running regardless
-of the result of the first expression, but it only excecutes if all expressions
-return a non-false value:
-
-.. code:: scm
-
-  (and (= 1 1) (post "I ran!"))
-  s4m: I ran!
-  s4m> ()
-
-  ; add another non-false expression and it will be the return value
-
-  (and (= 1 1) (post "I ran!") 42)
-  s4m: I ran!
-  s4m> 42
-
-This can be used with **or** as well, with expressions evaluating 
-until one of them returns true. This can be a convenient way to
-make something happen if a previous something returns false. For
-example, we know that a hash-table returns false if asked for a non-existent
-key, so this can be used to create a fall-back value 
-
-  
-.. code:: scm
-
-  (define h (hash-table :a 1 :b 2))
-  s4m> (hash-table :b 2 :a 1)
-  
-  ; get the value at a key, or some fall-back value
-  (or (h :a) 99)
-  s4m> 1
-  
-  (or (h :c) 99)
-  s4m> 99
-
-
-Branching with cond
--------------------
 
 The **cond** special form allows us to provide a series of predicate
-and result pairs. Evaluation stops when the first predicate passes. When
-combined with predicates and logical operators, this gives us everything
-we need to implement complex control flow.
+and result pairs. Evaluation stops when the first predicate passes.
 
 .. code:: scm
 
@@ -1698,7 +1412,6 @@ is a predicate that passes.
     (0 #f))
 
 
-
 Again, if we want conditional side effects, we can use **begin**:
  
 .. code:: scm
@@ -1718,9 +1431,10 @@ Again, if we want conditional side effects, we can use **begin**:
         (post "unhandled x!") 
         #f)))
 
+   
 
-Scopes with the let statement
----------------------------------------------------------------------
+Scope and the let statement
+-----------------------------
 
 In computer science, 'scope' referes to where and when the binding
 of a symbol to a variable or function is in effect. Scheme is
@@ -1766,7 +1480,7 @@ to the expression or function.
   s4m> 101
 
 If we change a variable from an outer scope inside a function body,
-by using **set!**, this will change the variable in the outer scope.
+by using **set!**, this  will change the variable in the outer scope.
 A common convention in Scheme is to name functions ending in an exclamation
 mark if they have side-effects on external definitions. 
 
@@ -1924,380 +1638,143 @@ variables local to a function.
   (my-fun 3)
   s4m> 6
 
-
-Looping
---------------------------------------------------------------------------------
-
-Looping in Scheme is also a bit unusual compared to other languages. If you're
-used to languages with a for-loop, you might be surprised to find there isn't one!
-Instead, we use a variety of functional programming constructs, in which the
-body of the loop is replaced by a call to a function. This is not as awkward as
-it might at first sound though, because lambda makes it easy to create temporary
-functions.  
-
-Map and for-each
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The simplest looping constructs in Scheme are **map** and **for-each**.
-These are similar in that in each, we pass them two arguments: a function, 
-and a list. The function is then repeatedly evaluated over each item in the list,
-with the list item used as the argument to the function.
-The difference between these two is that **map**
-*returns* a list of the results, while for-each is called for the side effect of calling
-the function, without collecting up the results in a new list. 
-
-In the example below, we pass map a function that returns the value of its single argument
-incremented by 1, and a list of integers. The call to map returns a new list,
-where each item is the old list item incremented by 1.
- 
-.. code:: scm
-
-  ; a function to increment an argument by one, and a list
-  (define (add-1 x) (+ 1 x))
-
-  (define my-list (list 1 2 3)) 
-
-  ; get a new list by calling map
-  (map add-1 my-list)
-  s4m> (2 3 4)
-
-Of course, we don't need to pre-define either the function or list.
- 
-.. code:: scm
-
-  (map
-    (lambda (x) (+ 1 x))
-    (list 1 2 3))
-  s4m> (2 3 4)
-
-If we don't need the values returned from our looping construct, but
-rather want to trigger an event, we use for-each. Because we aren't
-calling it for the return value, for-each returns **#<unspecified>**.
-
-.. code:: scm
-
-  ; for-each will execute the functions, return #<unspecified>
-  (for-each
-    (lambda (x) (post "loop pass, x is:" x))
-    (list 1 2 3))
-  s4m: loop pass, x is: 1
-  s4m: loop pass, x is: 2
-  s4m: loop pass, x is: 3
-  s4m> #<unspecified>
-
-If we want to combine side-effects and collection of values, we
-can have our function create the side-effect prior to returning
-its result:
-
-.. code:: scm
-
-  ; produce a side-effect, and collect the incremented value
-  (for-each
-    (lambda (x)(
-      (post "loop pass, x is:" x) 
-      (+ 1 x)))
-    (list 1 2 3))
-  s4m: loop pass, x is: 1
-  s4m: loop pass, x is: 2
-  s4m: loop pass, x is: 3
-  s4m> (2 3 4)
-
-
-If you're used to for loops, you might be wanting to iterate over
-an index within a numerical range. We can do this by using the range
-function to create our list of index numbers:
-
-.. code:: scm
-
-  ; for-each will execute the functions, return #<unspecified>
-  (for-each
-    (lambda (x) (post "loop pass, x is:" x))
-    (range 0 4))
-  s4m: loop pass, x is: 0
-  s4m: loop pass, x is: 1
-  s4m: loop pass, x is: 2
-  s4m: loop pass, x is: 3
-  s4m> #<unspecified>
-  
-A nice feature of both map and for-each is that they can
-take any number of collections over which to iterate, and will use
-one from each as arguments to the function. Here's an example
-of using this to make a list of lists:
-
-.. code:: scm
-
-  (map
-    (lambda (x y) (list x y))
-    (list :a :b :c)   ; first collection
-    (list 1 2 3))     ; second collection
-  s4m> ((:a 1) (:b 3) (:c 3))
-
-The asute reader will have noticed that in this case, our lambda
-is optional, because we could just use the list function itself!
-
-.. code:: scm
-
-  ; use list as the function
-  (map list (list :a :b :c) (list 1 2 3))
-  s4m> ((:a 1) (:b 3) (:c 3))
-
-If the lists are not equal in length, iteration stops when the
-first one runs out. 
-
-.. code:: scm
-
-  ; uneven lists stop at the shorter lens
-  (map list 
-    (list :a :b :c)
-    (list 1 2 3 4 5 6))
-  s4m> ((:a 1) (:b 3) (:c 3))
-
-  ; this can be handy combined with range and length
-  (define fruits (list 'apple 'pear 'banana))
-  (map list 
-    (range 0 (length fruits))
-    fruits)
-  s4m> ((0 apple) (1 pear) (2 banana))
     
-
-Looping with recursion
-----------------------
-
-The second most common option for looping in Scheme is using
-functions recursively. We can have a function call *itself*
-until a condition is met. This requires us to have an if or
-cond statement in the function, with one branch that stops
-the loop and the other that continues it. The stopping branch
-is called the "base case", and is written normally first. It returns
-a value that will be the return value of the whole loop.
-The other branch must call the function again, typically with
-an argument that is altered such that the loop only runs a finite
-number of times. For example, here is a function that recurses 4 times, 
-counting down from 4 to 1:
+The temporary scope that is created by a let (or a function) is called an *environment*.
+It's a frame in memory with a series of bindings. Normally, it's destroyed
+as soon as the let returns: there are no more references to the bindings
+in the let, so the garbage-collector cleans up and deletes the environment. 
+But if we return a function that has references to the bindings in the let, 
+the environment will live on. This is called a *closure* in many languages,
+and is the key to much of the power of Scheme and Lisp. You might hear this
+refered to as **"let over lambda"**. 
 
 .. code:: scm
 
-  ; our looping function
-  (define (count-down x)
-    (post "count-down, x:" x)
-    (if (= x 1)
-      ; the base case, stop by returning x
-      x
-      ; otherwise, re-run with x decremented
-      (count-down (- x 1))))
+  ; create a function inside a let, returning the function
+  (define add-42
+    (let ((to-add 42))
+      (lambda (x) 
+        (+ to-add x))))
+
+  (add-42 3)
+  s4m> 45
+
+In the above example, the lambda function has a reference to the temporary
+variable "to-add", and uses it in the body of the function. The function 
+is returned from the let (it's the last expression in the let) and bound
+to the name "add-42" in the define. Because we are holding on to the 
+reference to the function, this means the environment lives
+on after the let is finished.  The "to-add" variable
+in the lambda is the let's variable, it's the variable that existed in scope
+*when the lambda executed*. This is called **lexical scope**. 
+
+Here's an example demonstrating that the scope of **to-add** in the let
+is separate from global scope:
+
+.. code:: scm
+
+  ; make a global var, to-add
+  (define to-add 1)
+
+  ; create a function inside a let, with its own to-add variable 
+  (define add-42
+    (let ((to-add 42))
+      (lambda (x) 
+        (+ to-add x))))
+
+  ; calling add 42 here at global scope level still uses the inner version
+  (add-42 3)
+  s4m> 45
+  (set! to-add 2)
   
-  ; now run it!
-  (count-down 3)
-  s4m: count-down, x: 3 
-  s4m: count-down, x: 2 
-  s4m: count-down, x: 1 
-  s4m> 1
+  (add-42 3)
+  s4m> 45
 
-A more real-world example of recursion would involve doing something 
-with the argument, so that the base case returns something that was 
-calculated from the recursive calls. Here's an example of calculating a
-factorial. If you're not familiar with a factorial, the factorial of 
-a number is the result of multiplying a number by all the numbers 
-smaller than that number. So factorial 4 (written 4!) is 4 x 3 x 2 x 1.
+
+
+Nesting functions and lambdas is a way to make *objects as functions*. 
+These are functions that have some private state. The equivalence of lets 
+and lambdas means we can intermix them freely and we have a lot of flexibility
+in how we implement function objects. Let's make a function
+that counts how many times it has been called:
 
 .. code:: scm
 
-  (define (factorial x)
-    (post "factorial call, x is:" x)
-    (if (= x 1)
-      ; the base case, return 1
-      1
-      ; otherwise, return the value of the current
-      ; pass multiplied by the next recursion
-      (* x (factorial (- x 1)))))
+  ; make a counter variable in a let
+  (define counter-fun
+    ; count is a variable private to this function
+    (let ((count 0))
+      ; the lambda gets returned from the let and bound to counter-fun
+      (lambda () 
+        ; mutate our private variable and post
+        (set! count (+ 1 count))
+        (post "Call" count))))
   
-  ; runnning should return 3 x 2 x 1
-  (factorial 3)
-  s4m: factorial call, x is: 3 
-  s4m: factorial call, x is: 2
-  s4m: factorial call, x is: 1
-  s4m> 6
+  (counter-fun)
+  s4m: Call 1
+  (counter-fun)
+  s4m: Call 2
+
+The **count** variable is private to counter-fun. We
+have no other way of accessing it. 
+
+We can also accomplish something similar with nested functions.
+We could make this more sophisticated by allowing us
+to specify an increment value for each count. We'll have 
+a builder function make our counter: 
+
+.. code:: scm
+
+  ; a function that builds a counter function
+  (define (build-counter increment)
+    (let ((count 0))
+      (lambda () 
+        (set! count (+ 1 increment))
+        (post "Count is now:" count))))
   
-
-If you're used to other programming languages you may be wondering
-how this could possibly be efficient, with a stack-frame created for
-each call. Won't we run out of memory if using a very large value for
-the count? (If this means nothing to you, don't worry about it...)
-The answer is that Scheme uses *tail-call optimization*. If the
-recursive function call is the last expression in the body of the function,
-the interpreter knows that it's safe to implement the function 
-recursion as a jump, under-the-hood. This means that we don't actually
-make a new stack frame for each call, and thus tail-call recursion
-is efficient and safe. Recursion in Scheme is a big topic, and we
-will look at common patterns in future chapters. 
-
-Recursion with named let
---------------------------------------------------------------------------------
-Recursion can be confusing while you get used to it, and sometimes
-the syntax is just more verbose than it needs be, so Scheme includes
-an alternate way of looping that is secretely recursion, but looks much
-more like a "normal" loop. Named-let looks like a cross between a function
-call and a let statement, which makes sense when you remember that let and lambda
-are really the same thing in different syntax. 
-
-When we use *named-let*, we create a let block, but begin by giving
-it a name. Then we have any number of variable initializations, like a normal
-let. These are the *starting* values for the variables. Finally, when we
-call the name *as if it's a function*, we use new arguments and the intepreter
-starts the let block again, with the arguments replacing the initial values
-for the let variables. As with recursive functions, we need a test to see
-if we should loop again, and a return value that is returned when we're done
-looping.
-
-Let's start as simply as possible with our count-down again:   
-
-.. code:: scm
-
-  ; name is count-down-loop, let vars consists of x and y
-  ; because this is a let, it runs right away
-  (let count-down-loop ((x 3))
-    ; body of the let
-    (post "x is: " x)
-    ; if x is still greater than 1, repeat
-    (if (> x 1)
-      (count-down-loop (- x 1))))
-   
-  s4m: x is: 3 
-  s4m: x is: 2 
-  s4m: x is: 1 
-  s4m> #<unspecified>
-
-A more complex example might return something from the let. Remember,
-a let returns its last expression. We'll make a named-let to calcuate
-a value, x, to some power, y. 
-
-.. code:: scm
-
-  ; return x to the y: 2 to the 3rd power
-  (let exp-loop ((x 2) (y 3))
-    (post "exp-loop, x:" x "y:" y)
-    ; if y is greater than one, repeat
-    (if (> y 1)
-      ; on each pass, x is replaced with x times 2
-      (exp-loop (* x 2) (- y 1))
-      ; if y is 1, return the value of x
-      x)) 
-
-  s4m: exp-loop, x: 2 y: 3 
-  s4m: exp-loop, x: 4 y: 2 
-  s4m: exp-loop, x: 8 y: 1 
-  s4m> 8
-     
-Note that unlike recursion with a function, the binding for exp-loop
-is only valid in the let. We can't call exp-loop from outside of the let, 
-as if it's a function afterwards. For illustration, here is the exact 
-same construct, but implemented as an immediately executed function:
-
-.. code:: scm
-
-  ; as named let, executing immediately
-  (let exp-loop ((x 2) (y 3))
-    (if (> y 1)
-      (exp-loop (* x 2) (- y 1))
-      x)) 
-  s4m> 8
-
-  ; as a function that is then called
-  (define (exp-function x y)
-    (if (> y 1)
-      (exp-function (* x 2) (- y 1))
-      x))  
-  s4m> exp-function
-  (exp-function 2 3)
-  s4m> 8
-
-  ; with the function, we can call it again  
-  (exp-function 2 3)
-
-  ; whereas is exp-loop is no longer in scope
-  (exp-loop 2 3)
-  s4m: s4m Error: ;unbound variable exp-loop in (exp-loop 2 3)
-
-With any kind of recursion, we have to be careful not to get stuck
-in an infinite loop. Scheme For Max doesn't provide any kind of protection
-here: Max will lock up and you will need to restart it. This is no 
-different than with the JS object, but because recursion is easier to read
-in Scheme, you're more likely to encounter it. Test your loops!   
-
-
-Looping with while
---------------------------------------------------------------------------------
-
-Though not part of the various Scheme standards, s7 also provides an implemention of the while 
-loop. This is convenient when we want a simple, imperative loop, with the
-option to abort or continue. s7 is an unopinionated Scheme dialect, in that it
-doesn't force us to program in a functional style.
-
-While expressions consist of a condition and a body. The body is executed repeatedly
-as long as the condition is true. Additionally, we can abort execution of the body,
-jumping back to the beginning with **continue**, or break out of the loop
-entirely with **break**. We can combine this with the **let** form to ensure
-the variables we use in **while** are local.
-
-.. code:: scm
-
-  (let ((count 0))
-    (while (< count 3)
-      (post "count:" count)
-      (set! count (+ 1 count))))
-  s4m: count: 0 
-  s4m: count: 1 
-  s4m: count: 2 
-  s4m> ()
-
-Here's an example using break and continue with random, a construct
-we might use in a musical algorithm.
-
-.. code:: scm
-
-  (let ((count 0))
-    ; execute a maxium of 8 times
-    (while (< count 8)
-      (post "count:" count)
-
-      ; a 1 in 4 chance we quit after each time
-      (if (= 0 (random 4)) 
-        (begin (post "aborting!") (break)))
-
-      ; a 1 in 4 chance we stay on the same number
-      (if (= 0 (random 3)) 
-        (begin (post "continuing!") (continue)))
-
-      (set! count (+ 1 count))))
-  s4m: count: 0 
-  s4m: count: 1 
-  s4m: count: 2 
-  s4m: count: 3 
-  s4m: aborting! 
-  s4m> ()
+  (define counter (build-counter 2))
   
+  (counter)
+  s4m: Count is now: 2
+  (counter)
+  s4m: Count is now: 4
+ 
+ 
+Finally, here is an example of the same pattern where
+the function returned by the lambda, also itself returns a 
+value based on the private variable:
 
-.. TODO 
+.. code:: scm
 
-  The final looping construct we will look at is Scheme's **do**. Honestly,
-  I don't use **do** very much because the syntax is hard to read. I can
-  do almost anything I need with the others we've covered. But sometimes
-  **do** is convenient for complex loops.
+  ; a function that builds another function and tracks calls
+  (define (build-adder to-add)
+    ; a local variable storing number of times we are called
+    (let ((times-called 0))
+      ; a lambda to return the function-object
+      (lambda (x) 
+        ; update the local variable and post to the console
+        (set! times-called (+ 1 times-called))
+        (post "I have done" times-called "additions!")
+        ; return the results of our addition
+        (+ x to-add))))
 
-Conclusion of Part 1
---------------------
+  (define add-3 (build-adder 3))
 
-Congratulations! You know now enough Scheme to productively work in Scheme For Max.
-To learn about the Max specific s4m functions, check out the `Scheme For Max Documentation <https://iainctduncan.github.io/scheme-for-max-docs/>`_. 
+  (add-3 10)
+  s4m: "I have done 1 additions!"
+  s4m> 13
 
-Future plans for this e-book include chapters on Lisp programming idioms and further
-narrative content on Scheme For Max common practices and recipes. You can follow the repository
-on GitHub to receive announcements. Also, please feel free to submit feedback via the 
-GitHub issue tracker for this repository.
+  (add-3 12)
+  s4m: "I have done 2 additions!"
+  s4m> 15
+ 
 
-
-
-
-
-
-
+Note in the above that we did not need to explicitly 
+use **to-add** in the bindings of our let. Because lets and
+lambdas are equivalent in scope creation, the to-add variable
+and the times-called variable will both be persisted in the 
+environment that the lambda function brings back with itself. 
+In a future section, we will look at how these patterns can be
+used to make sophisticated and flexible object oriented systems.
+ 
 

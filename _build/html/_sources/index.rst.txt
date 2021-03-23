@@ -12,4 +12,3 @@ Learn Scheme For Max
     introduction
     getting_started
     part_1
-    part_2
