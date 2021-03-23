@@ -949,12 +949,12 @@ game of Scrabble with programmers.</p>
 <h2>Optional function arguments<a class="headerlink" href="#optional-function-arguments" title="Permalink to this headline">¶</a></h2>
 <p>Now that we know about lists, we can use them for creating functions
 that can be called with a variable number of arguments. (Also known as “multi-arity
-functions” if you want to talk fancy computer science lingo!)
+functions” if you want to use fancy computer science terms…)
 This is done by using dotted notation in the function argument, which will
 put any arguments past the explicitly named arguments into a list. This list will be
 the null list if no additional arguments are given:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; one mandatory argument x, and 0 or more optionals</span>
-<span class="c1">; the list &#39;args&#39;</span>
+<span class="c1">; that go in the list &#39;args</span>
 <span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun</span> <span class="nv">x</span> <span class="o">.</span> <span class="nv">args</span><span class="p">)</span>
   <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;called with&quot;</span> <span class="p">(</span><span class="nb">length </span><span class="nv">args</span><span class="p">)</span> <span class="s">&quot;optional args&quot;</span><span class="p">)</span>
   <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;optional args:&quot;</span> <span class="nv">args</span><span class="p">))</span>
@@ -1110,16 +1110,17 @@ multi-dimensional vectors, that you can read about on the official s7 page.</p>
 <h2>Hash-Tables<a class="headerlink" href="#hash-tables" title="Permalink to this headline">¶</a></h2>
 <p>Hash-tables are key-value stores, similar to dictionaries in Python or JavaScript.
 A key can be anything we’d like, but it’s most common to use a keyword as a key,
-or barring that, a symbol.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; create a hash-table, with keys :a and :b</span>
+or barring that, a symbol. This is also the most compatible with Max’s implementation
+of dictionaries, so I’d recommend sticking to them whenever possible.</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; create a hash-table, with keys :a and :b</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">my-hash</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="mi">2</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="mi">2</span><span class="p">)</span>
 
-<span class="c1">;; read value at :a</span>
+<span class="c1">; read value at :a</span>
 <span class="p">(</span><span class="nf">hash-table-ref</span> <span class="nv">my-hash</span> <span class="nv">:a</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">1</span>
 
-<span class="c1">;; set value at :b</span>
+<span class="c1">; set value at :b</span>
 <span class="p">(</span><span class="nf">hash-table-set!</span> <span class="nv">my-hash</span> <span class="nv">:b</span> <span class="mi">99</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">99</span>
 </pre></div>
@@ -1127,27 +1128,27 @@ or barring that, a symbol.</p>
 <p>Asking for a value that is not in a hash-table returns <strong>#f</strong>, and we can remove
 an item from a hash-table by storing <strong>#f</strong> at the key. We can put a new item
 in the hash-table by setting it’s value with a key.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; ask for a value not in our hash</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; ask for a value not in our hash</span>
 <span class="p">(</span><span class="nf">hash-table-ref</span> <span class="nv">my-hash</span> <span class="nv">:c</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="no">#f</span>
 
-<span class="c1">;; add :c entry</span>
+<span class="c1">; add :c entry</span>
 <span class="p">(</span><span class="nf">hash-table-set!</span> <span class="nv">my-hash</span> <span class="nv">:c</span> <span class="mi">99</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">99</span>
 
-<span class="c1">;; delete entry :b</span>
+<span class="c1">; delete entry :b by setting it to #f</span>
 <span class="p">(</span><span class="nf">hash-table-set!</span> <span class="nv">my-hash</span> <span class="nv">:b</span> <span class="no">#f</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="no">#f</span>
 
-<span class="c1">;; inspect our hash now, b is now gone</span>
+<span class="c1">; inspect our hash now, b is now gone</span>
 <span class="nv">my-hash</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:c</span> <span class="mi">99</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>As noted earlier, s7 Scheme supports <em>applicative syntax</em> for compound data types,
 and this works for hash-tables too, allowing us to get a value from a hash-table by
-calling the hash-table as a function with the key as an argument</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get :a, calling my-hash like a function</span>
+calling the hash-table as a function with the key as an argument:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get :a, with applicative-syntax</span>
 <span class="p">(</span><span class="nf">my-hash</span> <span class="nv">:a</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">1</span>
 </pre></div>
@@ -1167,13 +1168,13 @@ and we can thus also use this with <strong>set!</strong>:</p>
 <p>Applicative syntax is very helpful for nested hash-tables. Note
 that this syntax only works for applicative syntax, <em>not</em> for
 <strong>hash-table-ref</strong>:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="nv">:get</span> <span class="nv">contents</span> <span class="nv">of</span> <span class="nv">:c,</span> <span class="nv">at</span> <span class="nv">contents</span> <span class="nv">of</span> <span class="nv">:b</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; get contents of :c, at contents of :b</span>
 <span class="p">(</span><span class="nf">deep-hash</span> <span class="nv">:b</span> <span class="nv">:c</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">3</span>
 </pre></div>
 </div>
 <p>We can set this way too:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="nv">:set</span> <span class="nv">:b</span> <span class="nv">:c</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; set :b :c</span>
 <span class="p">(</span><span class="k">set! </span><span class="p">(</span><span class="nf">deep-hash</span> <span class="nv">:b</span> <span class="nv">:c</span><span class="p">)</span> <span class="mi">99</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">99</span>
 </pre></div>
@@ -1203,7 +1204,7 @@ on these functions.</p>
 </div>
 <div class="section" id="branching-with-if">
 <h2>Branching with if<a class="headerlink" href="#branching-with-if" title="Permalink to this headline">¶</a></h2>
-<p>In Scheme, we typically branch using one of two special forms: <strong>if</strong> and <strong>cond</strong>.
+<p>In Scheme, we can branch using one of two special forms: <strong>if</strong> and <strong>cond</strong>.
 These are both <em>special forms</em> - they look like function calls but are not
 evaluated the same way as functions. The <strong>if</strong> special form takes
 three clauses. The first is the <strong>predicate</strong>, that which is tested to determine
@@ -1213,17 +1214,17 @@ Thus the value returned by an if expression is the value of evaluating either th
 These clauses can be either simple values, or s-expressions that are evaluated to
 return a value. The reason <strong>if</strong> is a special form is that the s-expressions
 for the clauses <em>only</em> evaluate if that clause is to be returned.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; return 99 if test-var is 33, else return 66</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; return 99 if test-var is 33, else return 66</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">test-var</span> <span class="mi">99</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">99</span>
 <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">99</span> <span class="nv">test-var</span><span class="p">)</span> <span class="mi">33</span> <span class="mi">66</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">33</span>
 
-<span class="c1">;; using the above to set a variable</span>
+<span class="c1">; using the above to set a variable</span>
 <span class="p">(</span><span class="k">set! </span><span class="nv">my-var</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">99</span> <span class="nv">test-var</span><span class="p">)</span> <span class="mi">33</span> <span class="mi">66</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="mi">33</span>
 
-<span class="c1">;; an if statement that returns the results of s-exp evaluation</span>
+<span class="c1">; an if statement that returns the results of sexp evaluation</span>
 <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">99</span> <span class="nv">test-var</span><span class="p">)</span>
       <span class="p">(</span><span class="nb">+ </span><span class="mi">32</span> <span class="mi">1</span><span class="p">)</span>
       <span class="p">(</span><span class="nb">+ </span><span class="mi">66</span> <span class="mi">4</span><span class="p">))</span>
@@ -1241,7 +1242,7 @@ of the begin are evaluated, but only the last expression is returned.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">begin </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">3</span>
 
-<span class="c1">;; an if statement that returns the results of s-exp evaluation</span>
+<span class="c1">;; an if statement that returns the results of sexp evaluation</span>
 <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span>
       <span class="p">(</span><span class="k">begin </span><span class="p">(</span><span class="nf">post</span> <span class="s">&quot;first clause!&quot;</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">32</span> <span class="mi">1</span><span class="p">))</span>
       <span class="p">(</span><span class="k">begin </span><span class="p">(</span><span class="nf">post</span> <span class="s">&quot;second clause!&quot;</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">66</span> <span class="mi">4</span><span class="p">)))</span>
@@ -1250,7 +1251,7 @@ of the begin are evaluated, but only the last expression is returned.</p>
 </pre></div>
 </div>
 <p>When we run the above, we see that our console only shows
-the output from the first clause. If <strong>if</strong> was a function, we would
+the output from the first clause. Were <strong>if</strong> a function, we would
 see the output from both clauses, because of the fact that
 expressions are evaluated from the inside out. The fact that <strong>if</strong>
 breaks the rules of normal function execution is what makes it a special form.</p>
@@ -1258,62 +1259,62 @@ breaks the rules of normal function execution is what makes it a special form.</
 effect expressions in the slots, as long as we have made sure that
 it’s ok that the entire <strong>if</strong> form evaluates to whatever is
 returned in the clause (i.e. the null list, potentially).</p>
-<p>In S7, we can skip the final clause in an if statement, in which case
-the return value of the if is <strong>unspecified</strong> if the predicate fails.</p>
+<p>In s7, we can skip the final clause in an if statement, in which case
+the return value of the <strong>if</strong> is <strong>unspecified</strong> if the predicate fails.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; if var = 1, if evaluates to null, else to unspecified</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">var</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">2</span>
+
 <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">= </span><span class="nv">var</span> <span class="mi">1</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;first clause!&quot;</span><span class="p">))</span> <span class="c1">;post returns null, so the if will too</span>
+  <span class="c1">; post returns null, so the if will too</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;first clause!&quot;</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="nv">&lt;unspecified&gt;</span>
 </pre></div>
 </div>
 <p>This is a good time to discuss predicates and truth in Scheme, because it’s a
 bit different from what you may be used to other languages.</p>
 <p><strong>In Scheme, only #false is false</strong>.</p>
-<p>Repeat that three times. False can be expressed as either <strong>#f</strong> or <strong>#false</strong>,
+<p>Repeat that three times, because if you’re coming from other languages,
+this will get you! False can be written as either <strong>#f</strong> or <strong>#false</strong>,
 but nothing else ever equals false. Not zero (like C), not the null list
 (like Common Lisp), not an empty data structure. Nothing except <strong>#false</strong>!</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; only false is false!</span>
 <span class="p">(</span><span class="k">if </span><span class="mi">0</span>
-  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I post!&quot;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I post! Unlike in C family languages.&quot;</span><span class="p">)</span>
   <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;but I don&#39;t, because I never get evaluated!&quot;</span><span class="p">)</span> <span class="p">)</span>
 </pre></div>
 </div>
-<p>This is useful in Max, because Max has no notion of boolean True or False.
+<p>Conveniently, this works out rather well in Max, because Max has no notion of boolean True or False.
 In Max, we express booleans with 1 or 0. Which means that we can indicate
 an <em>invalid</em> Max value using Scheme’s #false, and we can test
 for a valid (or existing) value by using the value in a predicate. This
 will come in handy when we get to dictionaries and hash-tables.</p>
-<p>Scheme has many predicate functions which returns #f if they fail, and end in a <strong>?</strong>.
-For example, if we want to test whether a value is the <strong>null list</strong> (an empty list),
-we can use the <strong>null?</strong> predicate.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; if var is the null list, post</span>
-<span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">null? </span><span class="nv">var</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;Var is the null list.&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>We’ve seen some of these already, but some other useful predicates are
-<strong>defined?</strong>, <strong>procedure?</strong>, <strong>symbol?</strong>, <strong>number?</strong>, <strong>list?</strong>, <strong>keyword?</strong>.</p>
-<p>It is idiomatic Scheme to name your own predicates similarly.
-Not all Scheme implementations have the same predicates built in,
-so if you look up a predicate online, you probably want to test it
-in the REPL to make sure it’s in S74, or add it to your base file.</p>
+<p>Scheme has many predicate functions built in, some of which we’ve seen
+already. However, it’s worth mentioning that not all Scheme implementations
+have the <em>same</em> predicates built in, so if you look up a predicate online, you probably want to test it
+in the REPL to make sure it’s in s74, or add it to your base file.
+I added some in the s74 shim layer, which you can inspect by looking at the
+S74.scm file in the Scheme For Max Package.</p>
 </div>
 <div class="section" id="testing-equality">
 <h2>Testing equality<a class="headerlink" href="#testing-equality" title="Permalink to this headline">¶</a></h2>
 <p>Testing equality in Scheme is a bit different than you might be used to in other languages
 as well.</p>
-<p>Numeric equality is tested with <strong>=</strong>, but note that we do not have
-a question mark. Types of numbers (integers, floats, fractions) will be properly cast
-to each other:</p>
+<p>Numeric equality is tested with <strong>=</strong>, but note that unlike almost all the other
+predicates, we don’t use a question mark.
+Types of numbers (integers, floats, fractions) will be properly cast to each other:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; testing numbers for equality</span>
 <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mf">1.0</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">2</span><span class="nv">/2</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="mi">1</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="mi">1</span>
+
 <span class="p">(</span><span class="nb">= </span><span class="nv">a</span> <span class="mf">1.0</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4&gt;</span> <span class="no">#t</span>
 </pre></div>
 </div>
 <p>Testing whether non-numeric values are the same can be done with <strong>eqv?</strong>. This
@@ -1321,28 +1322,32 @@ tests whether the pointers point to <em>the same thing</em>.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; two vars to the same list are equivalent</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">a-alias</span> <span class="nv">a</span><span class="p">)</span>
-<span class="p">(</span><span class="nb">eqv? </span><span class="nv">a</span> <span class="nv">a-alis</span><span class="p">)</span>
-<span class="no">#t</span>
+
+<span class="p">(</span><span class="nb">eqv? </span><span class="nv">a</span> <span class="nv">a-alias</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
 
 <span class="c1">; but not equivalent to some other list with the same values</span>
 <span class="p">(</span><span class="nb">eqv? </span><span class="nv">a</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span>
-<span class="no">#f</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
 
 <span class="c1">; this works for functions and symbols too</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">var-pointing-to-post</span> <span class="nv">post</span><span class="p">)</span>
 <span class="p">(</span><span class="nb">eqv? </span><span class="nv">var-pointing-to-post</span> <span class="nv">post</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="k">define </span><span class="nv">the-sym</span> <span class="ss">&#39;my-symbol</span><span class="p">)</span>
 <span class="p">(</span><span class="nb">eqv? </span><span class="nv">the-sym</span> <span class="ss">&#39;my-symbol</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="nb">eqv? </span><span class="ss">&#39;my-symbol</span> <span class="ss">&#39;my-symbol</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
 
 <span class="c1">; simple types are equivalent only if no cast is involved</span>
 <span class="p">(</span><span class="nb">eqv? </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="nb">eqv? </span><span class="mi">1</span> <span class="mf">1.0</span><span class="p">)</span>
-<span class="no">#f</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
 </pre></div>
 </div>
 <p>Testing whether compound types are the same, element by element, can

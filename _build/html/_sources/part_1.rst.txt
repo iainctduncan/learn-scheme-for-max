@@ -1065,7 +1065,7 @@ Optional function arguments
 
 Now that we know about lists, we can use them for creating functions
 that can be called with a variable number of arguments. (Also known as "multi-arity 
-functions" if you want to talk fancy computer science lingo!)
+functions" if you want to use fancy computer science terms...)
 This is done by using dotted notation in the function argument, which will
 put any arguments past the explicitly named arguments into a list. This list will be
 the null list if no additional arguments are given:
@@ -1074,7 +1074,7 @@ the null list if no additional arguments are given:
 .. code:: scm
 
   ; one mandatory argument x, and 0 or more optionals 
-  ; the list 'args' 
+  ; that go in the list 'args 
   (define (my-fun x . args)
     (post "called with" (length args) "optional args")
     (post "optional args:" args))
@@ -1265,19 +1265,20 @@ Hash-Tables
 --------------------------------------------------------------------------------
 Hash-tables are key-value stores, similar to dictionaries in Python or JavaScript.
 A key can be anything we'd like, but it's most common to use a keyword as a key,
-or barring that, a symbol. 
+or barring that, a symbol. This is also the most compatible with Max's implementation
+of dictionaries, so I'd recommend sticking to them whenever possible. 
 
 .. code:: scm
   
-  ;; create a hash-table, with keys :a and :b
+  ; create a hash-table, with keys :a and :b
   (define my-hash (hash-table :a 1 :b 2)
   s4m> (hash-table :a 1 :b 2)
 
-  ;; read value at :a
+  ; read value at :a
   (hash-table-ref my-hash :a)
   s4m> 1
 
-  ;; set value at :b
+  ; set value at :b
   (hash-table-set! my-hash :b 99)
   s4m> 99
 
@@ -1287,29 +1288,29 @@ in the hash-table by setting it's value with a key.
 
 .. code:: scm
   
-  ;; ask for a value not in our hash
+  ; ask for a value not in our hash
   (hash-table-ref my-hash :c)
   s4m> #f
 
-  ;; add :c entry
+  ; add :c entry
   (hash-table-set! my-hash :c 99)
   s4m> 99
 
-  ;; delete entry :b
+  ; delete entry :b by setting it to #f
   (hash-table-set! my-hash :b #f)
   s4m> #f  
 
-  ;; inspect our hash now, b is now gone
+  ; inspect our hash now, b is now gone
   my-hash
   s4m> (hash-table :a 1 :c 99)
 
 As noted earlier, s7 Scheme supports *applicative syntax* for compound data types, 
 and this works for hash-tables too, allowing us to get a value from a hash-table by 
-calling the hash-table as a function with the key as an argument
+calling the hash-table as a function with the key as an argument:
 
 .. code:: scm
   
-  ; get :a, calling my-hash like a function
+  ; get :a, with applicative-syntax
   (my-hash :a)
   s4m> 1
 
@@ -1335,7 +1336,7 @@ that this syntax only works for applicative syntax, *not* for
 
 .. code:: scm
   
-  :get contents of :c, at contents of :b
+  ; get contents of :c, at contents of :b
   (deep-hash :b :c)
   s4m> 3
 
@@ -1343,7 +1344,7 @@ We can set this way too:
 
 .. code:: scm
   
-  :set :b :c
+  ; set :b :c
   (set! (deep-hash :b :c) 99)
   s4m> 99
  
@@ -1385,7 +1386,7 @@ on these functions.
 Branching with if  
 -----------------
 
-In Scheme, we typically branch using one of two special forms: **if** and **cond**.
+In Scheme, we can branch using one of two special forms: **if** and **cond**.
 These are both *special forms* - they look like function calls but are not
 evaluated the same way as functions. The **if** special form takes
 three clauses. The first is the **predicate**, that which is tested to determine
@@ -1398,17 +1399,17 @@ for the clauses *only* evaluate if that clause is to be returned.
 
 .. code:: scm
 
-  ;; return 99 if test-var is 33, else return 66
+  ; return 99 if test-var is 33, else return 66
   (define test-var 99)
   s4m> 99
   (if (= 99 test-var) 33 66)
   s4m> 33  
 
-  ;; using the above to set a variable
+  ; using the above to set a variable
   (set! my-var (if (= 99 test-var) 33 66))
   s4m> 33
 
-  ;; an if statement that returns the results of s-exp evaluation
+  ; an if statement that returns the results of sexp evaluation
   (if (= 99 test-var)   
         (+ 32 1) 
         (+ 66 4))
@@ -1428,7 +1429,7 @@ of the begin are evaluated, but only the last expression is returned.
   (begin 1 2 3)
   s4m> 3
 
-  ;; an if statement that returns the results of s-exp evaluation
+  ;; an if statement that returns the results of sexp evaluation
   (if (= 1 1)   
         (begin (post "first clause!") (+ 32 1))     
         (begin (post "second clause!") (+ 66 4)))
@@ -1436,7 +1437,7 @@ of the begin are evaluated, but only the last expression is returned.
   s4m> 33
 
 When we run the above, we see that our console only shows
-the output from the first clause. If **if** was a function, we would
+the output from the first clause. Were **if** a function, we would
 see the output from both clauses, because of the fact that 
 expressions are evaluated from the inside out. The fact that **if**
 breaks the rules of normal function execution is what makes it a special form.
@@ -1446,15 +1447,18 @@ effect expressions in the slots, as long as we have made sure that
 it's ok that the entire **if** form evaluates to whatever is
 returned in the clause (i.e. the null list, potentially).
 
-In S7, we can skip the final clause in an if statement, in which case
-the return value of the if is **unspecified** if the predicate fails.
+In s7, we can skip the final clause in an if statement, in which case
+the return value of the **if** is **unspecified** if the predicate fails.
 
 .. code:: scm
 
   ;; if var = 1, if evaluates to null, else to unspecified
   (define var 2)
+  s4m> 2
+
   (if (= var 1)   
-    (post "first clause!")) ;post returns null, so the if will too
+    ; post returns null, so the if will too
+    (post "first clause!")) 
   s4m> <unspecified>
         
 
@@ -1463,7 +1467,8 @@ bit different from what you may be used to other languages.
 
 **In Scheme, only #false is false**.
 
-Repeat that three times. False can be expressed as either **#f** or **#false**, 
+Repeat that three times, because if you're coming from other languages,
+this will get you! False can be written as either **#f** or **#false**, 
 but nothing else ever equals false. Not zero (like C), not the null list 
 (like Common Lisp), not an empty data structure. Nothing except **#false**!
 
@@ -1471,34 +1476,21 @@ but nothing else ever equals false. Not zero (like C), not the null list
 
   ;; only false is false! 
   (if 0
-    (post "I post!")
+    (post "I post! Unlike in C family languages.")
     (post "but I don't, because I never get evaluated!") )   
 
-This is useful in Max, because Max has no notion of boolean True or False. 
+Conveniently, this works out rather well in Max, because Max has no notion of boolean True or False. 
 In Max, we express booleans with 1 or 0. Which means that we can indicate
 an *invalid* Max value using Scheme's #false, and we can test
 for a valid (or existing) value by using the value in a predicate. This
 will come in handy when we get to dictionaries and hash-tables.
 
-Scheme has many predicate functions which returns #f if they fail, and end in a **?**. 
-For example, if we want to test whether a value is the **null list** (an empty list), 
-we can use the **null?** predicate.
-
-.. code:: scm
-
-  ;; if var is the null list, post
-  (if (null? var)
-    (post "Var is the null list."))
-
-We've seen some of these already, but some other useful predicates are 
-**defined?**, **procedure?**, **symbol?**, **number?**, **list?**, **keyword?**.
-
-.. TODO: link to a list of S7 built in predicates 
-  
-It is idiomatic Scheme to name your own predicates similarly.
-Not all Scheme implementations have the same predicates built in,
-so if you look up a predicate online, you probably want to test it
-in the REPL to make sure it's in S74, or add it to your base file.
+Scheme has many predicate functions built in, some of which we've seen
+already. However, it's worth mentioning that not all Scheme implementations 
+have the *same* predicates built in, so if you look up a predicate online, you probably want to test it
+in the REPL to make sure it's in s74, or add it to your base file.
+I added some in the s74 shim layer, which you can inspect by looking at the
+S74.scm file in the Scheme For Max Package.
 
 
 Testing equality
@@ -1506,51 +1498,61 @@ Testing equality
 Testing equality in Scheme is a bit different than you might be used to in other languages
 as well. 
 
-Numeric equality is tested with **=**, but note that we do not have
-a question mark. Types of numbers (integers, floats, fractions) will be properly cast
-to each other:
+Numeric equality is tested with **=**, but note that unlike almost all the other
+predicates, we don't use a question mark. 
+Types of numbers (integers, floats, fractions) will be properly cast to each other:
 
 .. code:: scm
 
   ; testing numbers for equality
   (= 1 1.0)
-  #t
+  s4m> #t
+
   (= 1 2/2)
-  #t
+  s4m> #t
+
   (define a 1)
+  s4m> 1
+
   (= a 1.0)
-  #t
+  s4> #t
 
 Testing whether non-numeric values are the same can be done with **eqv?**. This
 tests whether the pointers point to *the same thing*.
+
+.. TODO LEFT-OFF EDITING
 
 .. code:: scm
 
   ; two vars to the same list are equivalent
   (define a (list 1 2 3))
   (define a-alias a)
-  (eqv? a a-alis)
-  #t
+
+  (eqv? a a-alias)
+  s4m> #t
 
   ; but not equivalent to some other list with the same values
   (eqv? a (list 1 2 3)
-  #f
+  s4m> #f
 
   ; this works for functions and symbols too
   (define var-pointing-to-post post)
   (eqv? var-pointing-to-post post)
-  #t  
+  s4m> #t  
+
   (define the-sym 'my-symbol)
   (eqv? the-sym 'my-symbol)
-  #t
+  s4m> #t
+
   (eqv? 'my-symbol 'my-symbol)
-  #t
+  s4m> #t
 
   ; simple types are equivalent only if no cast is involved
   (eqv? 1 1)
-  #t
+  s4m> #t
+
   (eqv? 1 1.0)
-  #f
+  s4m> #f
    
 Testing whether compound types are the same, element by element, can
 be done with **equal?**. This tests the *contents* of the compound
