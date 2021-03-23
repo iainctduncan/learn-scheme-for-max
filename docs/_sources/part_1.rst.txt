@@ -773,7 +773,7 @@ Quote and eval are opposites, so we can nest them as much as we want:
   s4m> hello world 
  
 
-NEXT: symbols in Max, why it matters
+.. TODO NEXT: symbols in Max, why it matters
     
  
 Keywords
@@ -2276,12 +2276,23 @@ we might use in a musical algorithm.
   s4m> ()
   
 
-  
+.. TODO 
 
-The final looping construct we will look at is Scheme's **do**. Honestly,
-I don't use **do** very much because the syntax is hard to read. I can
-do almost anything I need with the others we've covered. But sometimes
-**do** is convenient for complex loops.
+  The final looping construct we will look at is Scheme's **do**. Honestly,
+  I don't use **do** very much because the syntax is hard to read. I can
+  do almost anything I need with the others we've covered. But sometimes
+  **do** is convenient for complex loops.
+
+Conclusion of Part 1
+--------------------
+
+Congratulations! You know now enough Scheme to productively work in Scheme For Max.
+To learn about the Max specific s4m functions, check out the `Scheme For Max Documentation <https://iainctduncan.github.io/scheme-for-max-docs/>`_. 
+
+Future plans for this e-book include chapters on Lisp programming idioms and further
+narrative content on Scheme For Max common practices and recipes. You can follow the repository
+on GitHub to receive announcements. Also, please feel free to submit feedback via the 
+GitHub issue tracker for this repository.
 
 
 

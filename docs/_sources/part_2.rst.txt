@@ -1,6 +1,5 @@
-Part 2 - Learning Lisp 
-======================
-
+Part 2 - Learning Scheme Lisp 
+=============================
 
 
 Environments and Closures
