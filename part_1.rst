@@ -975,7 +975,7 @@ because the final item is an atomic value instead of a value/pointer pair.
 .. code:: scm
 
   (append (list 1 2) 3)
-  s4m> (1 2 . 4)
+  s4m> (1 2 . 3)
 
 The dot before 4 indicates that the list stopped being a proper list
 at the third item. Improper lists are used in various places, but most typically
@@ -1520,11 +1520,11 @@ Types of numbers (integers, floats, fractions) will be properly cast to each oth
 Testing whether non-numeric values are the same can be done with **eqv?**. This
 tests whether the pointers point to *the same thing*.
 
-.. TODO LEFT-OFF EDITING
+.. TODO LEFT-OFF EDITING HERE
 
 .. code:: scm
 
-  ; two vars to the same list are equivalent
+  ; two variables holding the same list are equivalent
   (define a (list 1 2 3))
   (define a-alias a)
 
@@ -1556,55 +1556,63 @@ tests whether the pointers point to *the same thing*.
    
 Testing whether compound types are the same, element by element, can
 be done with **equal?**. This tests the *contents* of the compound
-type, not the pointers.
+type, as opposed to where the pointers point.
 
 .. code:: scm
 
   ; test a list 
   (equal? (list 1 2 3) (list 1 2 3))
-  #t
+  s4m> #t
+
   (define l1 (list 1 2 3))
   (define l2 (list 1 2 3))
+
   ; their contents are the same
   (equal? l1 l2)
-  #t
+  s4m> #t
+
   ; but they don't point to the same address in memory
   (eqv? l1 l2)
-  #f 
+  s4m> #f 
 
   ; this works for strings, symbols, and keywords too
   (equal? "foo" "foo")
-  #t
+  s4m> #t
+
   (equal? 'foo 'foo)
-  #t
+  s4m> #t
+  
   (define keyfoo :foo)
   (equal? keyfoo :foo)
+  s4m> #t
 
-There is one more variant, **eq?**. In S7, **eq?** is almost
+There is one more variant, **eq?**. In s7, **eq?** is almost
 entirely the same as **eqv?**, but this is not always the case
-in all Scheme implementations. For the most part, in S7 you can
+in all Scheme implementations. For the most part, in s7 you can
 just use **eq?** and **eqv?** interchangeably. Different implementations
 vary in their treatment of the empty list (the "null list"), which
-we will cover in detail later.
+we will cover in detail later, so if you're dealing with the nulls
+and equivalence, it's a good idea to check it.
 
 .. code:: scm
 
   ; is the null list the same as the null list?
-  (eq? (list) (list))
   ; s7 says yes! (not all do)
-  #t
+  (eq? (list) (list))
+  s4m> #t
+
   (eqv? (list) (list))
-  #t
+  s4m> #t
 
 When in doubt, test your equality checks in the repl! But in general,
-numeric equivalence uses **=**, non-numeric and compound type equality uses 
-**equal?**, and pointer comparison uses **eq?** and/or **eqv?**.
+for numeric equivalence use **=**, non-numeric and compound type equality use 
+**equal?**, and pointer comparison use **eq?** and/or **eqv?**.
 
 Logical operators: and, or, not
 -------------------------------
 
 Testing complex conditions often requires logical operators, for which Scheme
-provides us **and**, **or**, and **not**. 
+provides us with **and**, **or**, and **not**. 
 
 .. code:: scm
 
@@ -1630,12 +1638,12 @@ have returned either true or false.  Remember, in a boolean context, only
 .. code:: scm
 
   ; evaluate the second expression only if the first is true
-  ; note: the return value is from the last evaluated expression
-  (and (= 1 0) (post "I ran!"))
+  ; the return value is from the last *evaluated* expression
+  (and (= 1 0) (post "I don't get to run!"))
   s4m> #f
 
 If **and** were a function, we would see our post statement running regardless
-of the result of the first expression, but it only excecutes if all expressions
+of the result of the first expression, when in fact, it only executes if all expressions
 return a non-false value:
 
 .. code:: scm
@@ -1654,7 +1662,7 @@ This can be used with **or** as well, with expressions evaluating
 until one of them returns true. This can be a convenient way to
 make something happen if a previous something returns false. For
 example, we know that a hash-table returns false if asked for a non-existent
-key, so this can be used to create a fall-back value 
+key, so this can be used to assign a fall-back value: 
 
   
 .. code:: scm
@@ -1665,7 +1673,8 @@ key, so this can be used to create a fall-back value
   ; get the value at a key, or some fall-back value
   (or (h :a) 99)
   s4m> 1
-  
+
+  ; looking up :c returns false, so we get 99 
   (or (h :c) 99)
   s4m> 99
 
@@ -1680,14 +1689,14 @@ we need to implement complex control flow.
 
 .. code:: scm
 
-  ;; return some numbers for several values of x
+  ; return some numbers for several values of x
   (cond 
     ((= x 1) (+ 9 x))
     ((= x 2) (+ 8 x))
     ((= x 3) (+ 7 x)))
 
-  ;; to illustrate that these are just pairs of expressions,
-  ;; here's a cond that returns 99
+  ; to illustrate that these are just pairs of expressions,
+  ; here's a cond that returns 99
   (cond (#f #f) (#t 99))
 
 If no clause succeeds, cond will return **unspecified** (at least in S7!). 
@@ -1697,39 +1706,37 @@ is a predicate that passes.
 
 .. code:: scm
 
-  ;; return 10 for several values of x, or false for unhandled instance
+  ; return 10 for several values of x, or false for unhandled instance
   (cond 
     ((= x 1) (+ 9 x))
     ((= x 2) (+ 8 x))
     (else #f))
 
-  ;; because only false is false, this technically works too
-  ;; but you won't be popular coding like this.... 
+  ; because only false is false, this technically works too
+  ; but you won't be popular coding like this.... 
   (cond 
     ((= x 1) (+ 9 x))
     ((= x 2) (+ 8 x))
     (0 #f))
 
 
-
-Again, if we want conditional side effects, we can use **begin**:
+Unlike **if**, we don't need to bundle up expressions with **begin** in a cond
+clause to create side effects. The cond clause will run as many expressions
+as we provide for each clause
  
 .. code:: scm
 
-  ;; branching with side effects
+  ; branching with side effects
   (cond 
     ((= x 1) 
-      (begin 
         (post "x is 1") 
-        (+ 9 x)))
+        (+ 9 x))
     ((= x 2) 
-      (begin 
         (post "x is 2") 
-        (+ 8 x)))
+        (+ 8 x))
     (else    
-      (begin 
         (post "unhandled x!") 
-        #f)))
+        #f))
 
 
 Scopes with the let statement
@@ -1752,13 +1759,13 @@ to the expression or function.
 
 .. code:: scm
 
-  ;; make a global variable 
+  ; make a global variable 
   (define var 99)
   s4m> 99
 
-  ;; define a function, it can access var
-  ;; if we tried to run this function prior to defining var
-  ;; we'd get an error
+  ; define a function, it can access var
+  ; if we tried to run this function prior to defining var
+  ; we'd get an error
   (define (my-fun)
     (post "var:" var)
     ; return var + 1
@@ -1769,8 +1776,8 @@ to the expression or function.
   s4m: var: 99
   s4m> 100
 
-  ;; change var in the global scope & the change is visible 
-  ;; in the body of the function
+  ; change var in the global scope & the change is visible 
+  ; in the body of the function
   (set! var 100)
   s4m> 100
 
@@ -1780,16 +1787,16 @@ to the expression or function.
 
 If we change a variable from an outer scope inside a function body,
 by using **set!**, this will change the variable in the outer scope.
-A common convention in Scheme is to name functions ending in an exclamation
+A common convention in Scheme is to name our own functions ending in an exclamation
 mark if they have side-effects on external definitions. 
 
 .. code:: scm
 
-  ;; make a global var, var
+  ; make a global var, var
   (define var 99)
   s4m> 99
 
-  ;; define a function that access and mutates var
+  ; define a function that access and mutates var
   (define (my-fun!)
     ; set outer var, and return the value
     (set! var (+ 1 var)))
@@ -1798,9 +1805,9 @@ mark if they have side-effects on external definitions.
   (my-fun!)
   s4m> 100
 
-  ; var has changed in the global scope
+  ; now var has also changed in the global scope
   var
-  s4m> 101
+  s4m> 100
 
 
 Function parameters create bindings that are active in the function body,
@@ -1810,7 +1817,7 @@ to the function bound to the symbols used as function parameters.
 
 .. code:: scm
 
-  ;; make a function with a local binding
+  ; make a function with a local binding
   (define (my-fun-2 var)
     (post "var in my-fun-2:" var)
     (set! var (+ 1 var))
@@ -1819,23 +1826,23 @@ to the function bound to the symbols used as function parameters.
     var)
   s4m> my-fun-2
 
-  ;; call it
+  ; call it
   (my-fun-2 42)
   s4m: var in my-fun-2: 42
   s4m: var in my-fun-2 now: 43
   s4m> 43
 
-  ;; make a global variable with the same name, 'var'
+  ; make a global variable with the same name, 'var'
   (define var 42)
   s4m> 42
   
-  ;; call our function with it, returns 43 as before
+  ; call our function with it, returns 43 as before
   (my-fun-2 var)
   s4m: var in my-fun-2: 42
   s4m: var in my-fun-2 now: 43
   s4m> 43  
   
-  ;; check our global var - no change!
+  ; check our global var - no change!
   (post var)
   s4m: 42
   
@@ -1859,14 +1866,14 @@ Unlike a function, a let executes its body right away.
 
 .. code:: scm
 
-  ;; make a scope with two local bindings
+  ; make a scope with two local bindings
   (let 
     ((a 1) (b 2)) ; bindings
     (+ a b))      ; body, does addition, returns value
   s4m> 3
 
-  ;; the body can have many expressions
-  ;; the value returned by let is the last one
+  ; the body can have many expressions
+  ; the value returned by let is the last one
   (let ((a 1) (b 2))   ; bindings
     (post "a:" a)      ; body with 3 expressions
     (post "b:" b)
@@ -1878,7 +1885,7 @@ Unlike a function, a let executes its body right away.
 As far as scoping rules are concerned, variables defined
 by a let are treated in the body of the let *exactly* the 
 same way as function paramaters are treated in the body of a
-function. Under the hood, they are equivalent. These two
+function. Under the hood, they are the same. These two
 are completely equivalent:
 
 .. code:: scm
@@ -1889,11 +1896,11 @@ are completely equivalent:
   s4m> 3
 
   ; use a lambda and call it immediately
-  ((lamdba (a b)(+ a b)) 1 2)
+  ((lambda (a b) (+ a b)) 1 2)
   s4m> 3
 
 In Scheme, a let literally *is* an immediately executed lambda. 
-This is worth taking a moment to understand!
+This is worth taking a moment to think about!
 
 
 A regular let has all bindings defined at the same time,
@@ -1904,6 +1911,7 @@ A regular let has all bindings defined at the same time,
   ; an error, the second binding won't work!
   (let ((a 2) (b (* a a)))
     (+ a b))
+  s4m> Error: unbound variable a ...
  
 However, we can do this if we use **let***: 
 
@@ -1937,13 +1945,16 @@ variables local to a function.
   (my-fun 3)
   s4m> 6
 
+The possible combinations of **let** and **lambda** are very powerful, but
+can get complicated. They can be used to create partial functions, objects
+with private data, and numerous other patterns. We will look at these in more depth in Part 2. 
 
 Looping
 --------------------------------------------------------------------------------
 
 Looping in Scheme is also a bit unusual compared to other languages. If you're
 used to languages with a for-loop, you might be surprised to find there isn't one!
-Instead, we use a variety of functional programming constructs, in which the
+Instead, it is most common to use functional programming constructs, in which the
 body of the loop is replaced by a call to a function. This is not as awkward as
 it might at first sound though, because lambda makes it easy to create temporary
 functions.  
@@ -1951,12 +1962,12 @@ functions.
 Map and for-each
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The simplest looping constructs in Scheme are **map** and **for-each**.
-These are similar in that in each, we pass them two arguments: a function, 
-and a list. The function is then repeatedly evaluated over each item in the list,
-with the list item used as the argument to the function.
+These are similar in that in each, we pass in two arguments: a function, 
+and a list. The function is then repeatedly exectued over each item in the list,
+where the list item is used as the argument to the function.
 The difference between these two is that **map**
-*returns* a list of the results, while for-each is called for the side effect of calling
-the function, without collecting up the results in a new list. 
+*returns* a list of the results, while **for-each** is called for the side effect of calling
+the function (without collecting up the results in a new list). 
 
 In the example below, we pass map a function that returns the value of its single argument
 incremented by 1, and a list of integers. The call to map returns a new list,
@@ -1964,12 +1975,13 @@ where each item is the old list item incremented by 1.
  
 .. code:: scm
 
-  ; a function to increment an argument by one, and a list
+  ; a function to increment an argument by one
   (define (add-1 x) (+ 1 x))
 
+  ; a list to run this over
   (define my-list (list 1 2 3)) 
 
-  ; get a new list by calling map
+  ; get a new list by calling map using the above
   (map add-1 my-list)
   s4m> (2 3 4)
 
@@ -1982,8 +1994,8 @@ Of course, we don't need to pre-define either the function or list.
     (list 1 2 3))
   s4m> (2 3 4)
 
-If we don't need the values returned from our looping construct, but
-rather want to trigger an event, we use for-each. Because we aren't
+If we don't need the values to be returned from our loop, but
+rather want to trigger an event, we can use **for-each**. Because we aren't
 calling it for the return value, for-each returns **#<unspecified>**.
 
 .. code:: scm
@@ -2004,10 +2016,10 @@ its result:
 .. code:: scm
 
   ; produce a side-effect, and collect the incremented value
-  (for-each
-    (lambda (x)(
+  (map
+    (lambda (x)
       (post "loop pass, x is:" x) 
-      (+ 1 x)))
+      (+ 1 x))
     (list 1 2 3))
   s4m: loop pass, x is: 1
   s4m: loop pass, x is: 2
@@ -2058,7 +2070,7 @@ first one runs out.
 
 .. code:: scm
 
-  ; uneven lists stop at the shorter lens
+  ; stops at the end of the shorter list
   (map list 
     (list :a :b :c)
     (list 1 2 3 4 5 6))
@@ -2071,6 +2083,9 @@ first one runs out.
     fruits)
   s4m> ((0 apple) (1 pear) (2 banana))
     
+
+.. LEFTOFF edited to here
+   Bill pointed out my example is not tail-recursive!
 
 Looping with recursion
 ----------------------

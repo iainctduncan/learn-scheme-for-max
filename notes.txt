@@ -14,4 +14,6 @@ To cover:
 - looping: named let, for-each, map, do
 - recursion
 
-
+TODO: 
+- add sequence?
+- add apply to the eval section

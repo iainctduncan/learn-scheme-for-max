@@ -866,7 +866,7 @@ the result is a new list, and the original lists are unchanged.</p>
 you won’t get an error… but you also won’t get a proper list. This is
 because the final item is an atomic value instead of a value/pointer pair.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">append </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="mi">3</span><span class="p">)</span>
-<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="o">.</span> <span class="mi">4</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="o">.</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The dot before 4 indicates that the list stopped being a proper list
@@ -1319,7 +1319,7 @@ Types of numbers (integers, floats, fractions) will be properly cast to each oth
 </div>
 <p>Testing whether non-numeric values are the same can be done with <strong>eqv?</strong>. This
 tests whether the pointers point to <em>the same thing</em>.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; two vars to the same list are equivalent</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; two variables holding the same list are equivalent</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">a</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">a-alias</span> <span class="nv">a</span><span class="p">)</span>
 
@@ -1352,50 +1352,58 @@ tests whether the pointers point to <em>the same thing</em>.</p>
 </div>
 <p>Testing whether compound types are the same, element by element, can
 be done with <strong>equal?</strong>. This tests the <em>contents</em> of the compound
-type, not the pointers.</p>
+type, as opposed to where the pointers point.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; test a list</span>
 <span class="p">(</span><span class="nb">equal? </span><span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="k">define </span><span class="nv">l1</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">l2</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
+
 <span class="c1">; their contents are the same</span>
 <span class="p">(</span><span class="nb">equal? </span><span class="nv">l1</span> <span class="nv">l2</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="c1">; but they don&#39;t point to the same address in memory</span>
 <span class="p">(</span><span class="nb">eqv? </span><span class="nv">l1</span> <span class="nv">l2</span><span class="p">)</span>
-<span class="no">#f</span>
+<span class="nv">s4m&gt;</span> <span class="no">#f</span>
 
 <span class="c1">; this works for strings, symbols, and keywords too</span>
 <span class="p">(</span><span class="nb">equal? </span><span class="s">&quot;foo&quot;</span> <span class="s">&quot;foo&quot;</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="nb">equal? </span><span class="ss">&#39;foo</span> <span class="ss">&#39;foo</span><span class="p">)</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="k">define </span><span class="nv">keyfoo</span> <span class="nv">:foo</span><span class="p">)</span>
 <span class="p">(</span><span class="nb">equal? </span><span class="nv">keyfoo</span> <span class="nv">:foo</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
 </pre></div>
 </div>
-<p>There is one more variant, <strong>eq?</strong>. In S7, <strong>eq?</strong> is almost
+<p>There is one more variant, <strong>eq?</strong>. In s7, <strong>eq?</strong> is almost
 entirely the same as <strong>eqv?</strong>, but this is not always the case
-in all Scheme implementations. For the most part, in S7 you can
+in all Scheme implementations. For the most part, in s7 you can
 just use <strong>eq?</strong> and <strong>eqv?</strong> interchangeably. Different implementations
 vary in their treatment of the empty list (the “null list”), which
-we will cover in detail later.</p>
+we will cover in detail later, so if you’re dealing with the nulls
+and equivalence, it’s a good idea to check it.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; is the null list the same as the null list?</span>
-<span class="p">(</span><span class="nb">eq? </span><span class="p">(</span><span class="nf">list</span><span class="p">)</span> <span class="p">(</span><span class="nf">list</span><span class="p">))</span>
 <span class="c1">; s7 says yes! (not all do)</span>
-<span class="no">#t</span>
+<span class="p">(</span><span class="nb">eq? </span><span class="p">(</span><span class="nf">list</span><span class="p">)</span> <span class="p">(</span><span class="nf">list</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
+
 <span class="p">(</span><span class="nb">eqv? </span><span class="p">(</span><span class="nf">list</span><span class="p">)</span> <span class="p">(</span><span class="nf">list</span><span class="p">))</span>
-<span class="no">#t</span>
+<span class="nv">s4m&gt;</span> <span class="no">#t</span>
 </pre></div>
 </div>
 <p>When in doubt, test your equality checks in the repl! But in general,
-numeric equivalence uses <strong>=</strong>, non-numeric and compound type equality uses
-<strong>equal?</strong>, and pointer comparison uses <strong>eq?</strong> and/or <strong>eqv?</strong>.</p>
+for numeric equivalence use <strong>=</strong>, non-numeric and compound type equality use
+<strong>equal?</strong>, and pointer comparison use <strong>eq?</strong> and/or <strong>eqv?</strong>.</p>
 </div>
 <div class="section" id="logical-operators-and-or-not">
 <h2>Logical operators: and, or, not<a class="headerlink" href="#logical-operators-and-or-not" title="Permalink to this headline">¶</a></h2>
 <p>Testing complex conditions often requires logical operators, for which Scheme
-provides us <strong>and</strong>, <strong>or</strong>, and <strong>not</strong>.</p>
+provides us with <strong>and</strong>, <strong>or</strong>, and <strong>not</strong>.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; and returns true only if all predicates return true</span>
 <span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">&gt; </span><span class="mi">2</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">&lt; </span><span class="mi">1</span> <span class="mi">2</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="no">#t</span>
@@ -1416,13 +1424,13 @@ be useful if we want to evaluate some expressions only if previous expressions
 have returned either true or false.  Remember, in a boolean context, only
 #false is #false!</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; evaluate the second expression only if the first is true</span>
-<span class="c1">; note: the return value is from the last evaluated expression</span>
-<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I ran!&quot;</span><span class="p">))</span>
+<span class="c1">; the return value is from the last *evaluated* expression</span>
+<span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">0</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I don&#39;t get to run!&quot;</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="no">#f</span>
 </pre></div>
 </div>
 <p>If <strong>and</strong> were a function, we would see our post statement running regardless
-of the result of the first expression, but it only excecutes if all expressions
+of the result of the first expression, when in fact, it only executes if all expressions
 return a non-false value:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">and </span><span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;I ran!&quot;</span><span class="p">))</span>
 <span class="nv">s4m:</span> <span class="nv">I</span> <span class="nv">ran!</span>
@@ -1439,7 +1447,7 @@ return a non-false value:</p>
 until one of them returns true. This can be a convenient way to
 make something happen if a previous something returns false. For
 example, we know that a hash-table returns false if asked for a non-existent
-key, so this can be used to create a fall-back value</p>
+key, so this can be used to assign a fall-back value:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">define </span><span class="nv">h</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:a</span> <span class="mi">1</span> <span class="nv">:b</span> <span class="mi">2</span><span class="p">))</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="nf">hash-table</span> <span class="nv">:b</span> <span class="mi">2</span> <span class="nv">:a</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -1447,6 +1455,7 @@ key, so this can be used to create a fall-back value</p>
 <span class="p">(</span><span class="k">or </span><span class="p">(</span><span class="nf">h</span> <span class="nv">:a</span><span class="p">)</span> <span class="mi">99</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">1</span>
 
+<span class="c1">; looking up :c returns false, so we get 99</span>
 <span class="p">(</span><span class="k">or </span><span class="p">(</span><span class="nf">h</span> <span class="nv">:c</span><span class="p">)</span> <span class="mi">99</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">99</span>
 </pre></div>
@@ -1458,14 +1467,14 @@ key, so this can be used to create a fall-back value</p>
 and result pairs. Evaluation stops when the first predicate passes. When
 combined with predicates and logical operators, this gives us everything
 we need to implement complex control flow.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; return some numbers for several values of x</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; return some numbers for several values of x</span>
 <span class="p">(</span><span class="nf">cond</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">7</span> <span class="nv">x</span><span class="p">)))</span>
 
-<span class="c1">;; to illustrate that these are just pairs of expressions,</span>
-<span class="c1">;; here&#39;s a cond that returns 99</span>
+<span class="c1">; to illustrate that these are just pairs of expressions,</span>
+<span class="c1">; here&#39;s a cond that returns 99</span>
 <span class="p">(</span><span class="k">cond </span><span class="p">(</span><span class="no">#f</span> <span class="no">#f</span><span class="p">)</span> <span class="p">(</span><span class="no">#t</span> <span class="mi">99</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -1473,35 +1482,34 @@ we need to implement complex control flow.</p>
 To avoid this, it is common to return <strong>#f</strong> in an <strong>else</strong> clause. Interestingly,
 <strong>else</strong> is just a short-form for returning true - all we need
 is a predicate that passes.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; return 10 for several values of x, or false for unhandled instance</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; return 10 for several values of x, or false for unhandled instance</span>
 <span class="p">(</span><span class="nf">cond</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">(</span><span class="k">else </span><span class="no">#f</span><span class="p">))</span>
 
-<span class="c1">;; because only false is false, this technically works too</span>
-<span class="c1">;; but you won&#39;t be popular coding like this....</span>
+<span class="c1">; because only false is false, this technically works too</span>
+<span class="c1">; but you won&#39;t be popular coding like this....</span>
 <span class="p">(</span><span class="nf">cond</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">(</span><span class="mi">0</span> <span class="no">#f</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>Again, if we want conditional side effects, we can use <strong>begin</strong>:</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; branching with side effects</span>
+<p>Unlike <strong>if</strong>, we don’t need to bundle up expressions with <strong>begin</strong> in a cond
+clause to create side effects. The cond clause will run as many expressions
+as we provide for each clause</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; branching with side effects</span>
 <span class="p">(</span><span class="nf">cond</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="p">(</span><span class="nf">begin</span>
       <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;x is 1&quot;</span><span class="p">)</span>
-      <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="mi">9</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">((</span><span class="nb">= </span><span class="nv">x</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="p">(</span><span class="nf">begin</span>
       <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;x is 2&quot;</span><span class="p">)</span>
-      <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nb">+ </span><span class="mi">8</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">(</span><span class="nf">else</span>
-    <span class="p">(</span><span class="nf">begin</span>
       <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;unhandled x!&quot;</span><span class="p">)</span>
-      <span class="no">#f</span><span class="p">)))</span>
+      <span class="no">#f</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -1519,13 +1527,13 @@ from Max messages, bindings execute in the <strong>global scope</strong>, also
 refered to as the “top-level scope”.  These bindings are visible in
 any other expression or function, unless shadowed by bindings local
 to the expression or function.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a global variable</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a global variable</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">var</span> <span class="mi">99</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">99</span>
 
-<span class="c1">;; define a function, it can access var</span>
-<span class="c1">;; if we tried to run this function prior to defining var</span>
-<span class="c1">;; we&#39;d get an error</span>
+<span class="c1">; define a function, it can access var</span>
+<span class="c1">; if we tried to run this function prior to defining var</span>
+<span class="c1">; we&#39;d get an error</span>
 <span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun</span><span class="p">)</span>
   <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;var:&quot;</span> <span class="nv">var</span><span class="p">)</span>
   <span class="c1">; return var + 1</span>
@@ -1536,8 +1544,8 @@ to the expression or function.</p>
 <span class="nv">s4m:</span> <span class="nv">var:</span> <span class="mi">99</span>
 <span class="nv">s4m&gt;</span> <span class="mi">100</span>
 
-<span class="c1">;; change var in the global scope &amp; the change is visible</span>
-<span class="c1">;; in the body of the function</span>
+<span class="c1">; change var in the global scope &amp; the change is visible</span>
+<span class="c1">; in the body of the function</span>
 <span class="p">(</span><span class="k">set! </span><span class="nv">var</span> <span class="mi">100</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">100</span>
 
@@ -1548,13 +1556,13 @@ to the expression or function.</p>
 </div>
 <p>If we change a variable from an outer scope inside a function body,
 by using <strong>set!</strong>, this will change the variable in the outer scope.
-A common convention in Scheme is to name functions ending in an exclamation
+A common convention in Scheme is to name our own functions ending in an exclamation
 mark if they have side-effects on external definitions.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a global var, var</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a global var, var</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">var</span> <span class="mi">99</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">99</span>
 
-<span class="c1">;; define a function that access and mutates var</span>
+<span class="c1">; define a function that access and mutates var</span>
 <span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun!</span><span class="p">)</span>
   <span class="c1">; set outer var, and return the value</span>
   <span class="p">(</span><span class="k">set! </span><span class="nv">var</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">var</span><span class="p">)))</span>
@@ -1563,16 +1571,16 @@ mark if they have side-effects on external definitions.</p>
 <span class="p">(</span><span class="nf">my-fun!</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">100</span>
 
-<span class="c1">; var has changed in the global scope</span>
+<span class="c1">; now var has also changed in the global scope</span>
 <span class="nv">var</span>
-<span class="nv">s4m&gt;</span> <span class="mi">101</span>
+<span class="nv">s4m&gt;</span> <span class="mi">100</span>
 </pre></div>
 </div>
 <p>Function parameters create bindings that are active in the function body,
 making an inner scope. This is also called “function scope”. The
 function scope will have the values of the arguments passed
 to the function bound to the symbols used as function parameters.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a function with a local binding</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a function with a local binding</span>
 <span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun-2</span> <span class="nv">var</span><span class="p">)</span>
   <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;var in my-fun-2:&quot;</span> <span class="nv">var</span><span class="p">)</span>
   <span class="p">(</span><span class="k">set! </span><span class="nv">var</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">var</span><span class="p">))</span>
@@ -1581,23 +1589,23 @@ to the function bound to the symbols used as function parameters.</p>
   <span class="nv">var</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="nv">my-fun-2</span>
 
-<span class="c1">;; call it</span>
+<span class="c1">; call it</span>
 <span class="p">(</span><span class="nf">my-fun-2</span> <span class="mi">42</span><span class="p">)</span>
 <span class="nv">s4m:</span> <span class="nv">var</span> <span class="nv">in</span> <span class="nv">my-fun-2:</span> <span class="mi">42</span>
 <span class="nv">s4m:</span> <span class="nv">var</span> <span class="nv">in</span> <span class="nv">my-fun-2</span> <span class="nv">now:</span> <span class="mi">43</span>
 <span class="nv">s4m&gt;</span> <span class="mi">43</span>
 
-<span class="c1">;; make a global variable with the same name, &#39;var&#39;</span>
+<span class="c1">; make a global variable with the same name, &#39;var&#39;</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">var</span> <span class="mi">42</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">42</span>
 
-<span class="c1">;; call our function with it, returns 43 as before</span>
+<span class="c1">; call our function with it, returns 43 as before</span>
 <span class="p">(</span><span class="nf">my-fun-2</span> <span class="nv">var</span><span class="p">)</span>
 <span class="nv">s4m:</span> <span class="nv">var</span> <span class="nv">in</span> <span class="nv">my-fun-2:</span> <span class="mi">42</span>
 <span class="nv">s4m:</span> <span class="nv">var</span> <span class="nv">in</span> <span class="nv">my-fun-2</span> <span class="nv">now:</span> <span class="mi">43</span>
 <span class="nv">s4m&gt;</span> <span class="mi">43</span>
 
-<span class="c1">;; check our global var - no change!</span>
+<span class="c1">; check our global var - no change!</span>
 <span class="p">(</span><span class="nf">post</span> <span class="nv">var</span><span class="p">)</span>
 <span class="nv">s4m:</span> <span class="mi">42</span>
 </pre></div>
@@ -1618,14 +1626,14 @@ last expression in the body. Within the body of the let,
 any bindings defined by the let’s first clause will shadow
 any identically named bindings in outer scopes.
 Unlike a function, a let executes its body right away.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">;; make a scope with two local bindings</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a scope with two local bindings</span>
 <span class="p">(</span><span class="nf">let</span>
   <span class="p">((</span><span class="nf">a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="mi">2</span><span class="p">))</span> <span class="c1">; bindings</span>
   <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>      <span class="c1">; body, does addition, returns value</span>
 <span class="nv">s4m&gt;</span> <span class="mi">3</span>
 
-<span class="c1">;; the body can have many expressions</span>
-<span class="c1">;; the value returned by let is the last one</span>
+<span class="c1">; the body can have many expressions</span>
+<span class="c1">; the value returned by let is the last one</span>
 <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="mi">2</span><span class="p">))</span>   <span class="c1">; bindings</span>
   <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;a:&quot;</span> <span class="nv">a</span><span class="p">)</span>      <span class="c1">; body with 3 expressions</span>
   <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;b:&quot;</span> <span class="nv">b</span><span class="p">)</span>
@@ -1638,7 +1646,7 @@ Unlike a function, a let executes its body right away.</p>
 <p>As far as scoping rules are concerned, variables defined
 by a let are treated in the body of the let <em>exactly</em> the
 same way as function paramaters are treated in the body of a
-function. Under the hood, they are equivalent. These two
+function. Under the hood, they are the same. These two
 are completely equivalent:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; use a let</span>
 <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">a</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="mi">2</span><span class="p">))</span>
@@ -1646,17 +1654,18 @@ are completely equivalent:</p>
 <span class="nv">s4m&gt;</span> <span class="mi">3</span>
 
 <span class="c1">; use a lambda and call it immediately</span>
-<span class="p">((</span><span class="nf">lamdba</span> <span class="p">(</span><span class="nf">a</span> <span class="nv">b</span><span class="p">)(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
+<span class="p">((</span><span class="k">lambda </span><span class="p">(</span><span class="nf">a</span> <span class="nv">b</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span> <span class="mi">1</span> <span class="mi">2</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="mi">3</span>
 </pre></div>
 </div>
 <p>In Scheme, a let literally <em>is</em> an immediately executed lambda.
-This is worth taking a moment to understand!</p>
+This is worth taking a moment to think about!</p>
 <p>A regular let has all bindings defined at the same time,
 (order not guaranteed) meaning that a binding cannot refer to a previous binding:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; an error, the second binding won&#39;t work!</span>
 <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">a</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">b</span> <span class="p">(</span><span class="nb">* </span><span class="nv">a</span> <span class="nv">a</span><span class="p">)))</span>
   <span class="p">(</span><span class="nb">+ </span><span class="nv">a</span> <span class="nv">b</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error:</span> <span class="nv">unbound</span> <span class="nv">variable</span> <span class="nv">a</span> <span class="o">...</span>
 </pre></div>
 </div>
 <p>However, we can do this if we use <strong>let*</strong>:</p>
@@ -1685,33 +1694,37 @@ variables local to a function.</p>
 <span class="nv">s4m&gt;</span> <span class="mi">6</span>
 </pre></div>
 </div>
+<p>The possible combinations of <strong>let</strong> and <strong>lambda</strong> are very powerful, but
+can get complicated. They can be used to create partial functions, objects
+with private data, and numerous other patterns. We will look at these in more depth in Part 2.</p>
 </div>
 <div class="section" id="looping">
 <h2>Looping<a class="headerlink" href="#looping" title="Permalink to this headline">¶</a></h2>
 <p>Looping in Scheme is also a bit unusual compared to other languages. If you’re
 used to languages with a for-loop, you might be surprised to find there isn’t one!
-Instead, we use a variety of functional programming constructs, in which the
+Instead, it is most common to use functional programming constructs, in which the
 body of the loop is replaced by a call to a function. This is not as awkward as
 it might at first sound though, because lambda makes it easy to create temporary
 functions.</p>
 <div class="section" id="map-and-for-each">
 <h3>Map and for-each<a class="headerlink" href="#map-and-for-each" title="Permalink to this headline">¶</a></h3>
 <p>The simplest looping constructs in Scheme are <strong>map</strong> and <strong>for-each</strong>.
-These are similar in that in each, we pass them two arguments: a function,
-and a list. The function is then repeatedly evaluated over each item in the list,
-with the list item used as the argument to the function.
+These are similar in that in each, we pass in two arguments: a function,
+and a list. The function is then repeatedly exectued over each item in the list,
+where the list item is used as the argument to the function.
 The difference between these two is that <strong>map</strong>
-<em>returns</em> a list of the results, while for-each is called for the side effect of calling
-the function, without collecting up the results in a new list.</p>
+<em>returns</em> a list of the results, while <strong>for-each</strong> is called for the side effect of calling
+the function (without collecting up the results in a new list).</p>
 <p>In the example below, we pass map a function that returns the value of its single argument
 incremented by 1, and a list of integers. The call to map returns a new list,
 where each item is the old list item incremented by 1.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function to increment an argument by one, and a list</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; a function to increment an argument by one</span>
 <span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">add-1</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
 
+<span class="c1">; a list to run this over</span>
 <span class="p">(</span><span class="k">define </span><span class="nv">my-list</span> <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
 
-<span class="c1">; get a new list by calling map</span>
+<span class="c1">; get a new list by calling map using the above</span>
 <span class="p">(</span><span class="nb">map </span><span class="nv">add-1</span> <span class="nv">my-list</span><span class="p">)</span>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
 </pre></div>
@@ -1723,8 +1736,8 @@ where each item is the old list item incremented by 1.</p>
 <span class="nv">s4m&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>If we don’t need the values returned from our looping construct, but
-rather want to trigger an event, we use for-each. Because we aren’t
+<p>If we don’t need the values to be returned from our loop, but
+rather want to trigger an event, we can use <strong>for-each</strong>. Because we aren’t
 calling it for the return value, for-each returns <strong>#&lt;unspecified&gt;</strong>.</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; for-each will execute the functions, return #&lt;unspecified&gt;</span>
 <span class="p">(</span><span class="nf">for-each</span>
@@ -1740,10 +1753,10 @@ calling it for the return value, for-each returns <strong>#&lt;unspecified&gt;</
 can have our function create the side-effect prior to returning
 its result:</p>
 <div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; produce a side-effect, and collect the incremented value</span>
-<span class="p">(</span><span class="nf">for-each</span>
-  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)(</span>
+<span class="p">(</span><span class="nf">map</span>
+  <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">x</span><span class="p">)</span>
     <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;loop pass, x is:&quot;</span> <span class="nv">x</span><span class="p">)</span>
-    <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nb">+ </span><span class="mi">1</span> <span class="nv">x</span><span class="p">))</span>
   <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">))</span>
 <span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">1</span>
 <span class="nv">s4m:</span> <span class="nv">loop</span> <span class="nv">pass,</span> <span class="nv">x</span> <span class="nv">is:</span> <span class="mi">2</span>
@@ -1785,7 +1798,7 @@ is optional, because we could just use the list function itself!</p>
 </div>
 <p>If the lists are not equal in length, iteration stops when the
 first one runs out.</p>
-<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; uneven lists stop at the shorter lens</span>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; stops at the end of the shorter list</span>
 <span class="p">(</span><span class="nb">map </span><span class="nv">list</span>
   <span class="p">(</span><span class="nb">list </span><span class="nv">:a</span> <span class="nv">:b</span> <span class="nv">:c</span><span class="p">)</span>
   <span class="p">(</span><span class="nb">list </span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">))</span>
