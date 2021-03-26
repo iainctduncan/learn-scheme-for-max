@@ -1739,8 +1739,8 @@ as we provide for each clause
         #f))
 
 
-Scopes with the let statement
----------------------------------------------------------------------
+Scopes with the let statement and inner defines
+--------------------------------------------------------------------
 
 In computer science, 'scope' referes to where and when the binding
 of a symbol to a variable or function is in effect. Scheme is
@@ -1855,8 +1855,32 @@ my-fun-2, only the local version is updated. After the
 function exits, its scope becomes inactive and the symbol
 'var' will again refer to the global variable.
 
-The **let** special form creates a local scope. It takes
-an expression with a series of bindings of
+We can create inner scopes within a function by nesting
+**define** statements. This can be used for creating local 
+variables and local functions that will only be visible in their
+enclosing scope:
+
+.. code:: scm
+
+  ; make a function with a nested variable
+  (define (my-fun)
+    ; create a nested function and call it
+    (define inner-var 99)
+    (define (inner-fun)
+      (post "in inner-fun, inner-var is:" inner-var))
+    (inner-fun))
+  s4m> my-fun
+  
+  (my-fun)
+  s4m> in inner-fun, inner-var is: 99
+
+  ; inner-fun is not visible outside of my-fun
+  (inner-fun)
+  s4m> Error: unbound variable inner-fun
+
+This works, but oftentimes a more elegant solution
+to inner scopes is the use of the **let** special form. 
+It takes an expression with a series of bindings of
 symbol and value, and a body that is executed with those
 bindings. The let statement returns the value of the
 last expression in the body. Within the body of the let,

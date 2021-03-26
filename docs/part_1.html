@@ -1513,8 +1513,8 @@ as we provide for each clause</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="scopes-with-the-let-statement">
-<h2>Scopes with the let statement<a class="headerlink" href="#scopes-with-the-let-statement" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="scopes-with-the-let-statement-and-inner-defines">
+<h2>Scopes with the let statement and inner defines<a class="headerlink" href="#scopes-with-the-let-statement-and-inner-defines" title="Permalink to this headline">¶</a></h2>
 <p>In computer science, ‘scope’ referes to where and when the binding
 of a symbol to a variable or function is in effect. Scheme is
 a <em>lexically scoped</em> language, allowing us to use functions and
@@ -1618,8 +1618,30 @@ results in the new variable - var in the scope of my-fun-2 -
 my-fun-2, only the local version is updated. After the
 function exits, its scope becomes inactive and the symbol
 ‘var’ will again refer to the global variable.</p>
-<p>The <strong>let</strong> special form creates a local scope. It takes
-an expression with a series of bindings of
+<p>We can create inner scopes within a function by nesting
+<strong>define</strong> statements. This can be used for creating local
+variables and local functions that will only be visible in their
+enclosing scope:</p>
+<div class="highlight-scm notranslate"><div class="highlight"><pre><span></span><span class="c1">; make a function with a nested variable</span>
+<span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">my-fun</span><span class="p">)</span>
+  <span class="c1">; create a nested function and call it</span>
+  <span class="p">(</span><span class="k">define </span><span class="nv">inner-var</span> <span class="mi">99</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">inner-fun</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">post</span> <span class="s">&quot;in inner-fun, inner-var is:&quot;</span> <span class="nv">inner-var</span><span class="p">))</span>
+  <span class="p">(</span><span class="nf">inner-fun</span><span class="p">))</span>
+<span class="nv">s4m&gt;</span> <span class="nv">my-fun</span>
+
+<span class="p">(</span><span class="nf">my-fun</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">in</span> <span class="nv">inner-fun,</span> <span class="nv">inner-var</span> <span class="nv">is:</span> <span class="mi">99</span>
+
+<span class="c1">; inner-fun is not visible outside of my-fun</span>
+<span class="p">(</span><span class="nf">inner-fun</span><span class="p">)</span>
+<span class="nv">s4m&gt;</span> <span class="nv">Error:</span> <span class="nv">unbound</span> <span class="nv">variable</span> <span class="nv">inner-fun</span>
+</pre></div>
+</div>
+<p>This works, but oftentimes a more elegant solution
+to inner scopes is the use of the <strong>let</strong> special form.
+It takes an expression with a series of bindings of
 symbol and value, and a body that is executed with those
 bindings. The let statement returns the value of the
 last expression in the body. Within the body of the let,
@@ -2059,7 +2081,7 @@ GitHub issue tracker for this repository.</p>
 <li class="toctree-l2"><a class="reference internal" href="#testing-equality">Testing equality</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#logical-operators-and-or-not">Logical operators: and, or, not</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#branching-with-cond">Branching with cond</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#scopes-with-the-let-statement">Scopes with the let statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scopes-with-the-let-statement-and-inner-defines">Scopes with the let statement and inner defines</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#looping">Looping</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#looping-with-recursion">Looping with recursion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#recursion-with-named-let">Recursion with named let</a></li>
