@@ -9,3 +9,4 @@ Learn Scheme For Max
     introduction
     getting_started
     part_1
+    other_resources
