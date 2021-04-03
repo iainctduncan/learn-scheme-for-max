@@ -42,12 +42,8 @@ that you can play with right away in Max.
 
 Once you've gotten up and running, and experienced the power of the language first hand,
 you can go over the basics again in a more theory-heavy book to really understand
-the Lisp paradigm. I recommend the book `Simply Scheme <https://people.eecs.berkeley.edu/~bh/ss-toc2.html>`_ 
-which is available free online.
-It's a great introduction to Scheme and computer science, and
-has examples that will almost all run on Scheme For Max, or in the Dr Racket 
-IDE. And a good reference for looking up commands (not all of which are in s7 mind you!) is
-the Dybvig book `The Scheme Programming Language (3rd edition) <https://www.scheme.com/tspl3/>`_ 
+the Lisp paradigm. Appendix 1 of this book goes through the various resources available,
+from beginner to advanced.  
 
 .. TODO
   There is a Scheme For Max cookbook recipe on how to use Simply Scheme with S4M,
